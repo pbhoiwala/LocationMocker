@@ -1,0 +1,20 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=5C:19:FF:C8:BF:82:E5:AC:68:FF:C0:90:11:56:7D:8F:2C:BD:55:AA%3Bcom.bhoiwala.locationmocker
+
+    You can also add your credentials to an existing key, using this line:
+    5C:19:FF:C8:BF:82:E5:AC:68:FF:C0:90:11:56:7D:8F:2C:BD:55:AA;com.bhoiwala.locationmocker
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">YOUR_KEY_HERE</string>
+
+</resources>
