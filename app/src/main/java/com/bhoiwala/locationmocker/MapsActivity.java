@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,6 +54,7 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     private static final String TAG = MapsActivity.class.getSimpleName();
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
+    private FloatingActionButton myLoc;
 
     // The entry point to Google Play services, used by the Places API and Fused Location Provider.
     private GoogleApiClient mGoogleApiClient;
@@ -181,7 +184,7 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
-
+        myLoc = (FloatingActionButton)findViewById(R.id.find_my_location);
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
         // Add markers for nearby places.
@@ -238,6 +241,24 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
                 mMap.clear();
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(point));
                 mMap.addMarker(markerOptions);
+            }
+        });
+       //parth code
+        myLoc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(mCurrentLocation == null){
+                    toast("Please enabled location services and try again");
+                    updateLocationUI();
+                }
+                else {
+
+                    toast("Current location set");
+                    myLoc.setImageResource(R.mipmap.ic_launcher_blue);
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                            new LatLng(mCurrentLocation.getLatitude(),
+                                    mCurrentLocation.getLongitude()), DEFAULT_ZOOM));
+                }
             }
         });
     }
@@ -390,15 +411,18 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
 
         if (mLocationPermissionGranted) {
             mMap.setMyLocationEnabled(true);
-            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(false);
+//            mMap.getUiSettings().setMyLocationButtonEnabled(true);  // un-comment this to display default my location button
         } else {
             mMap.setMyLocationEnabled(false);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
             mCurrentLocation = null;
         }
     }
+
+    public void toast(String message){
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
 }
-
-
-
 
