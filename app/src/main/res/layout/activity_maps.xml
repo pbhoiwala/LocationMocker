@@ -5,6 +5,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.bhoiwala.locationmocker.MapsActivity">
 
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        >
+        <fragment
+            android:id="@+id/place_autocomplete_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+            />
+    </android.support.v7.widget.CardView>
+
 <fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -13,12 +26,16 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content" />
 
-    <fragment
-        android:id="@+id/place_autocomplete_fragment"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
-        />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/start_faking"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="64dp"
+        android:src="@mipmap/ic_play_arrow_white_24dp"
+        app:backgroundTint="@android:color/holo_green_light"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/find_my_location"
@@ -28,6 +45,7 @@
         android:layout_margin="16dp"
         android:src="@mipmap/ic_crosshairs_gps_grey600_24dp"
         app:backgroundTint="@android:color/white"/>
+
 
     <!--<TextView-->
         <!--android:id="@+id/latlongLocation"-->

@@ -7,8 +7,11 @@ import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.Build;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -28,13 +31,17 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.identity.intents.Address;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -55,6 +62,9 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
     private FloatingActionButton myLoc;
+    private FloatingActionButton startFaking;
+    PlaceAutocompleteFragment autocompleteFragment;
+    private Location fakeLocation;
 
     // The entry point to Google Play services, used by the Places API and Fused Location Provider.
     private GoogleApiClient mGoogleApiClient;
@@ -109,7 +119,7 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
         if (mGoogleApiClient.isConnected()) {
             getDeviceLocation();
         }
-        updateMarkers();
+//        updateMarkers(); //todo not needed
     }
 
     /**
@@ -174,7 +184,7 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     @Override
     public void onLocationChanged(Location location) {
         mCurrentLocation = location;
-        updateMarkers();
+//        updateMarkers(); //todo not needed
     }
 
     /**
@@ -185,10 +195,14 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     public void onMapReady(GoogleMap map) {
         mMap = map;
         myLoc = (FloatingActionButton)findViewById(R.id.find_my_location);
+        fakeLocation = new Location("");
+        startFaking = (FloatingActionButton)findViewById(R.id.start_faking);
+        autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
         // Add markers for nearby places.
-        updateMarkers();
+//        updateMarkers(); //todo not needed
 
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
@@ -235,12 +249,16 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
             @Override
             public void onMapLongClick(LatLng point) {
                 // TODO Auto-generated method stub
+                myLoc.setImageResource(R.mipmap.ic_crosshairs_gps_grey600_24dp);
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.position(point);
                 markerOptions.title("Dropped Pin");
                 mMap.clear();
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(point));
                 mMap.addMarker(markerOptions);
+                fakeLocation.setLatitude(point.latitude);
+                fakeLocation.setLongitude(point.longitude);
+                fakeLocation.setAccuracy(mCurrentLocation.getAccuracy());
             }
         });
        //parth code
@@ -252,8 +270,8 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
                     updateLocationUI();
                 }
                 else {
-
                     toast("Current location set");
+//                    mMap.clear();
                     myLoc.setImageResource(R.mipmap.ic_launcher_blue);
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
                             new LatLng(mCurrentLocation.getLatitude(),
@@ -261,6 +279,96 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
                 }
             }
         });
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                mMap.clear();
+                myLoc.setImageResource(R.mipmap.ic_crosshairs_gps_grey600_24dp);
+                // TODO: Get info about the selected place.
+                String placeName = place.getName().toString();
+                Log.i(TAG, "Place: " + placeName);
+                LatLng latLng = place.getLatLng();
+                mMap.addMarker(new MarkerOptions().position(latLng).title(placeName));
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+                fakeLocation.setLatitude(place.getLatLng().latitude);
+                fakeLocation.setLongitude(place.getLatLng().longitude);
+                fakeLocation.setAccuracy(mCurrentLocation.getAccuracy());
+            }
+
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                Log.i(TAG, "An error occurred: " + status);
+            }
+        });
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                marker.showInfoWindow();
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+                toast("Press Green button to start faking location");
+                return true;
+            }
+        });
+
+        /*startFaking.setOnClickListener(new View.OnClickListener(){
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View view) {
+                LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                Criteria criteria = new Criteria();
+                criteria.setAccuracy( Criteria.ACCURACY_FINE );
+                String mocLocationProvider = lm.getBestProvider( criteria, true );
+                if ( mocLocationProvider == null ) {
+                    Log.e("ERROR", "No location provider found!");
+                    return;
+                }
+                Location mockLocation = new Location(mocLocationProvider); // a string
+
+                mockLocation.setLatitude(fakeLocation.getLatitude());  // double
+                mockLocation.setLongitude(fakeLocation.getLongitude());
+                mockLocation.setAccuracy(fakeLocation.getAccuracy());
+//                mockLocation.setAltitude(location.getAltitude());
+                mockLocation.setTime(System.currentTimeMillis());
+                mockLocation.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+                lm.setTestProviderLocation( LocationManager.GPS_PROVIDER, mockLocation);
+//                lm.setTestProviderLocation( mocLocationProvider, mockLocation);
+            }
+        });*/
+
+        startFaking.setOnClickListener(new View.OnClickListener(){
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View view) {
+                LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                lm.addTestProvider (LocationManager.GPS_PROVIDER,
+                        "requiresNetwork" == "",
+                        "requiresSatellite" == "",
+                        "requiresCell" == "",
+                        "hasMonetaryCost" == "",
+                        "supportsAltitude" == "",
+                        "supportsSpeed" == "",
+                        "supportsBearing" == "",
+                        android.location.Criteria.POWER_LOW,
+                        android.location.Criteria.ACCURACY_FINE);
+
+                Location newLocation = new Location(LocationManager.GPS_PROVIDER);
+                newLocation.setLatitude(fakeLocation.getLatitude());
+                newLocation.setLongitude(fakeLocation.getLongitude());
+                newLocation.setAccuracy(fakeLocation.getAccuracy());
+                newLocation.setTime(System.currentTimeMillis());
+                newLocation.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+                lm.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+                lm.setTestProviderStatus(LocationManager.GPS_PROVIDER,
+                        LocationProvider.AVAILABLE,
+                        null,System.currentTimeMillis());
+
+                lm.setTestProviderLocation(LocationManager.GPS_PROVIDER, newLocation);
+            }
+        });
+
     }
 
     /**
@@ -356,49 +464,49 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
      * Adds markers for places nearby the device and turns the My Location feature on or off,
      * provided location permission has been granted.
      */
-    private void updateMarkers() {
-        if (mMap == null) {
-            return;
-        }
-
-        if (mLocationPermissionGranted) {
-            // Get the businesses and other points of interest located
-            // nearest to the device's current location.
-            @SuppressWarnings("MissingPermission")
-            PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
-                    .getCurrentPlace(mGoogleApiClient, null);
-            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-                @Override
-                public void onResult(@NonNull PlaceLikelihoodBuffer likelyPlaces) {
-                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                        // Add a marker for each place near the device's current location, with an
-                        // info window showing place information.
-                        String attributions = (String) placeLikelihood.getPlace().getAttributions();
-                        String snippet = (String) placeLikelihood.getPlace().getAddress();
-                        if (attributions != null) {
-                            snippet = snippet + "\n" + attributions;
-                        }
-
-                        mMap.addMarker(new MarkerOptions()
-                                .position(placeLikelihood.getPlace().getLatLng())
-                                .title((String) placeLikelihood.getPlace().getName())
-                                .snippet(snippet));
-                    }
-                    // Release the place likelihood buffer.
-                    likelyPlaces.release();
-                }
-            });
-        } else {
-            mMap.addMarker(new MarkerOptions()
-                    .position(mDefaultLocation)
-                    .title("hey title")
-                    .snippet("hey snippet"));
+//    private void updateMarkers() {
+//        if (mMap == null) {
+//            return;
+//        }
+//
+//        if (mLocationPermissionGranted) {
+//            // Get the businesses and other points of interest located
+//            // nearest to the device's current location.
+//            @SuppressWarnings("MissingPermission")
+//            PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
+//                    .getCurrentPlace(mGoogleApiClient, null);
+//            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+//                @Override
+//                public void onResult(@NonNull PlaceLikelihoodBuffer likelyPlaces) {
+//                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+//                        // Add a marker for each place near the device's current location, with an
+//                        // info window showing place information.
+//                        String attributions = (String) placeLikelihood.getPlace().getAttributions();
+//                        String snippet = (String) placeLikelihood.getPlace().getAddress();
+//                        if (attributions != null) {
+//                            snippet = snippet + "\n" + attributions;
+//                        }
+//
+//                        mMap.addMarker(new MarkerOptions()
+//                                .position(placeLikelihood.getPlace().getLatLng())
+//                                .title((String) placeLikelihood.getPlace().getName())
+//                                .snippet(snippet));
+//                    }
+//                    // Release the place likelihood buffer.
+//                    likelyPlaces.release();
+//                }
+//            });
+//        } else {
 //            mMap.addMarker(new MarkerOptions()
 //                    .position(mDefaultLocation)
-//                    .title(getString(R.string.default_info_title))
-//                    .snippet(getString(R.string.default_info_snippet)));
-        }
-    }
+//                    .title("hey title")
+//                    .snippet("hey snippet"));
+////            mMap.addMarker(new MarkerOptions()
+////                    .position(mDefaultLocation)
+////                    .title(getString(R.string.default_info_title))
+////                    .snippet(getString(R.string.default_info_snippet)));
+//        }
+//    }
 
     /**
      * Updates the map's UI settings based on whether the user has granted location permission.
@@ -426,3 +534,5 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
 
 }
 
+// // TODO: 12/13/2016 - add ability to change map type from "regular" to "satellite"
+//  // TODO: 12/14/2016 - detect when "Location", "Allow mock location" etc. are on or off
