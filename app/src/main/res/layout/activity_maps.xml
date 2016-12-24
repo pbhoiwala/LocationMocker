@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.bhoiwala.locationmocker.MapsActivity">
+    tools:context="com.bhoiwala.locationmocker.MapsActivityOld">
 
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
@@ -18,33 +18,28 @@
             />
     </android.support.v7.widget.CardView>
 
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/map"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content" />
+
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:map="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom"
+            android:textColor="@color/cardview_light_background"
+            android:background="@android:color/holo_red_light"
+            android:id="@+id/warning"
+            android:text="A warning will be displayed here."
+            android:fontFamily="sans-serif"
+            android:textSize="20sp"
+            android:textAlignment="center" />
 
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/start_faking"
-        android:layout_width="wrap_content"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="64dp"
-        android:src="@mipmap/ic_play_arrow_white_24dp"
-        app:backgroundTint="@android:color/holo_green_light"/>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/find_my_location"
-        android:layout_width="wrap_content"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@mipmap/ic_crosshairs_gps_grey600_24dp"
-        app:backgroundTint="@android:color/white"/>
 
 
     <!--<TextView-->
@@ -87,6 +82,38 @@
         <!--android:paddingRight="10dp"-->
         <!--android:id="@+id/button" />-->
 
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/start_faking"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:src="@mipmap/ic_play_arrow_white_24dp"
+            app:backgroundTint="@android:color/holo_green_light"
+            android:layout_marginBottom="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="16dp" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/find_my_location"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginBottom="16dp"
+            android:src="@mipmap/ic_crosshairs_gps_grey600_24dp"
+            app:backgroundTint="@android:color/white"
+            android:layout_above="@+id/start_faking"
+            android:layout_alignLeft="@+id/start_faking"
+            android:layout_alignStart="@+id/start_faking" />
+    </RelativeLayout>
 
 </FrameLayout>
 
