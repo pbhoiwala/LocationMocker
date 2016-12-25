@@ -3,6 +3,8 @@ package com.bhoiwala.locationmocker;
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -253,6 +255,8 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     @Override
     public void onMapReady(GoogleMap map) {
         Log.e("~~~~~", "*** onMapReady");
+        final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        final String provider = LocationManager.GPS_PROVIDER;
         mMap = map;
         myLoc = (FloatingActionButton) findViewById(R.id.find_my_location);
         warning = (TextView)findViewById(R.id.warning);
@@ -405,18 +409,48 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void onClick(View view) throws SecurityException { // SecurityException will be thrown when MOCK Location is disabled
-                startFakingLocationNew();
+                if(!isMocking){
+                    startFakingLocationNew(lm, provider);
+                    showButton();
+                }else{
+                    stopFakingLocation(lm, provider);
+                    showButton();
+                }
+
             }
         });
         warningCheck();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void startFakingLocationNew(){
-        try {
+    public void showButton(){
+        if(isMocking){
+            //show red button to stop
+            startFaking.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(MapsActivityOld.this, R.color.red_tint )));
+            startFaking.setImageResource(R.mipmap.ic_stop_white_24dp);
 
-            final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            final String provider = LocationManager.GPS_PROVIDER;
+        }else{
+            //show green button to start
+            startFaking.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(MapsActivityOld.this, R.color.green_tint )));
+            startFaking.setImageResource(R.mipmap.ic_play_arrow_white_24dp);
+        }
+    }
+
+    public void stopFakingLocation(LocationManager lm, String provider){
+        Log.e("<<<<", "going to stop Mocking");
+        lm.removeTestProvider(provider);
+        isMocking = false;
+        updateLocationUI();
+    }
+
+
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public void startFakingLocationNew(final LocationManager lm, final String provider){
+        try {
+            isMocking = true;
+
+            toast("Mocking begins");
+            Log.e("<<<<", "going to start Mocking");
 //            String provider = "fused";
             lm.requestLocationUpdates(provider, 50, 0, lis);
             lm.addTestProvider(provider,
@@ -442,14 +476,18 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
 
             newLocation.setTime(System.currentTimeMillis());
             newLocation.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
-
-            Timer t = new Timer();
+            mCurrentLocation = newLocation;
+            final Timer t = new Timer();
             t.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    newLocation.setTime(System.currentTimeMillis());
-                    newLocation.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
-                    lm.setTestProviderLocation(provider, newLocation);
+                    if(isMocking) {
+                        newLocation.setTime(System.currentTimeMillis());
+                        newLocation.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
+                        lm.setTestProviderLocation(provider, newLocation);
+                    }else{
+                        t.cancel();
+                    }
                 }
             },0,2000);
 
@@ -459,9 +497,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
 //                    null, System.currentTimeMillis());
 //            lm.setTestProviderLocation(provider, newLocation);
 
-            isMocking = true;
-            mCurrentLocation = newLocation;
-            toast("Mocking begins");
+
             Log.e("~~~~~", " **** Starting to mock now");
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling

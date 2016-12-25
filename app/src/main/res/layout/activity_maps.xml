@@ -94,13 +94,14 @@
             android:layout_height="56dp"
             android:layout_gravity="bottom|end"
             android:src="@mipmap/ic_play_arrow_white_24dp"
-            app:backgroundTint="@android:color/holo_green_light"
+
             android:layout_marginBottom="16dp"
             android:layout_marginRight="16dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:layout_marginEnd="16dp" />
+            android:layout_marginEnd="16dp"
+            app:backgroundTint="@android:color/holo_green_light" />
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/find_my_location"
