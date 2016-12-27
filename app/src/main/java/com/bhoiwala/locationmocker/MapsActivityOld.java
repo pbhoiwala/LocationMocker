@@ -86,9 +86,9 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
-    // A default location (Sydney, Australia) and default zoom to use when location permission is
+    // A default location (New York City) and default zoom to use when location permission is
     // not granted.
-    private final LatLng mDefaultLocation = new LatLng(-33.8523341, 151.2106085);
+    private final LatLng mDefaultLocation = new LatLng(40.730610, -73.935242);
     private static final int DEFAULT_ZOOM = 18;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
@@ -100,41 +100,29 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
 
-    // navigation drawer code below
+    // Tools for navigation drawer
     private DrawerLayout drawer;
     private Toolbar toolbar;
     private ActionBarDrawerToggle toggle;
     private NavigationView navigationView;
     private Boolean isSatellite = false;
     private ImageView addFav;
-    // navigation drawer code above
+    // Tools for navigation drawer
 
-
+    // Location Listener when mocking location (basically useless)
     private LocationListener lis = new LocationListener() {
         @Override
-        public void onLocationChanged(Location location) {
-
-        }
-
+        public void onLocationChanged(Location location) {}
         @Override
-        public void onStatusChanged(String s, int i, Bundle bundle) {
-
-        }
-
+        public void onStatusChanged(String s, int i, Bundle bundle) {}
         @Override
-        public void onProviderEnabled(String s) {
-
-        }
-
+        public void onProviderEnabled(String s) {}
         @Override
-        public void onProviderDisabled(String s) {
-
-        }
+        public void onProviderDisabled(String s) {}
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.e("~~~~~", "*** onCreate");
         super.onCreate(savedInstanceState);
 
        // Retrieve location and camera position from saved instance state.
@@ -144,11 +132,15 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         }
 
         // Retrieve the content view that renders the map.
-//        setContentView(R.layout.activity_maps);
+        // setContentView(R.layout.activity_maps);  use this when not using navigation drawer
+        // activity_main implements navigation drawer
         setContentView(R.layout.activity_main);
+
         // Build the Play services client for use by the Fused Location Provider and the Places API.
         buildGoogleApiClient();
         mGoogleApiClient.connect();
+
+        // Initialize tools for navigation drawer
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         drawer = (DrawerLayout)findViewById(R.id.drawer_layout);
         toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -156,26 +148,27 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         toggle.syncState();
         navigationView = (NavigationView)findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
     }
 
+    /**
+     * Checks if "Mock Locations" is enabled(true) or disabled(false) in Developer Settings
+     * TODO: If it is disabled, ask user if they want to enable it
+     */
     public boolean isMockLocationEnabled() {
-        Log.e("~~~~~", "*** isMockLocationEnabled");
-        boolean isMockLocation = false;
+        boolean isMockEnabled = false;
         try {
-            //if marshmallow
+            // if marshmallow
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 AppOpsManager opsManager = (AppOpsManager) this.getSystemService(Context.APP_OPS_SERVICE);
-                isMockLocation = (opsManager.checkOp(AppOpsManager.OPSTR_MOCK_LOCATION, android.os.Process.myUid(), BuildConfig.APPLICATION_ID) == AppOpsManager.MODE_ALLOWED);
+                isMockEnabled = (opsManager.checkOp(AppOpsManager.OPSTR_MOCK_LOCATION, android.os.Process.myUid(), BuildConfig.APPLICATION_ID) == AppOpsManager.MODE_ALLOWED);
             } else {
                 // in marshmallow this will always return true
-                isMockLocation = !android.provider.Settings.Secure.getString(this.getContentResolver(), "mock_location").equals("0");
+                isMockEnabled = !android.provider.Settings.Secure.getString(this.getContentResolver(), "mock_location").equals("0");
             }
         } catch (Exception e) {
-            return isMockLocation;
+            return isMockEnabled;
         }
-
-        return isMockLocation;
+        return isMockEnabled;
     }
 
 
@@ -184,25 +177,23 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      */
     @Override
     protected void onResume() {
-        Log.e("~~~~~", "*** onResume");
         super.onResume();
         if (mGoogleApiClient.isConnected()) {
             getDeviceLocation();
         }
-//        updateMarkers(); //todo not needed
     }
 
     /**
+     * Pause activity
      * Stop location updates when the activity is no longer in focus, to reduce battery consumption.
      */
     @Override
     protected void onPause() {
-        Log.e("~~~~~", "*** onPause");
         super.onPause();
-//        if (mGoogleApiClient.isConnected()) {
-//            LocationServices.FusedLocationApi.removeLocationUpdates(
-//                    mGoogleApiClient, this);
-//        }
+        /*if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(
+                    mGoogleApiClient, this);
+        }*/
     }
 
     /**
@@ -210,16 +201,10 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      */
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Log.e("~~~~~", "*** onSavedInstanceState");
         if (mMap != null) {
             outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
             outState.putParcelable(KEY_LOCATION, mCurrentLocation);
             super.onSaveInstanceState(outState);
-        }
-        if (mCurrentLocation != null) {
-            Log.e(">>>>> LATI ", String.valueOf(mCurrentLocation.getLatitude()));
-            Log.e(">>>>> LONG ", String.valueOf(mCurrentLocation.getLongitude()));
-            Log.e(">>>>> ACCU ", String.valueOf(mCurrentLocation.getAccuracy()));
         }
     }
 
@@ -229,7 +214,6 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      */
     @Override
     public void onConnected(Bundle connectionHint) {
-        Log.e("~~~~~", "*** onConnected");
         getDeviceLocation();
         // Build the map.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -242,7 +226,6 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      */
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult result) {
-        Log.e("~~~~~", "*** onConnectionFailed");
         // Refer to the reference doc for ConnectionResult to see what error codes might
         // be returned in onConnectionFailed.
         Log.d(TAG, "Play services connection failed: ConnectionResult.getErrorCode() = "
@@ -258,6 +241,10 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         Log.d(TAG, "Play services connection suspended");
     }
 
+    /**
+     * Handles back button press. If navigation drawer is open, then close the app
+     * otherwise do regular back press function.
+     */
     @Override
     public void onBackPressed(){
         if(drawer.isDrawerOpen(Gravity.LEFT)){
@@ -270,21 +257,11 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     /**
      * Handles the callback when location changes.
      */
-
-//    @Override
-//    public void onLocationChanged(Location location) {
-//
-//
-//        Log.e("~~~~~", "*** onLocationChanged - faking is " + isMocking.toString());
-//        mCurrentLocation = location;
-//        Log.e(">>>>> LATI ", String.valueOf(mCurrentLocation.getLatitude()));
-//        Log.e(">>>>> LONG ", String.valueOf(mCurrentLocation.getLongitude()));
-//        Log.e(">>>>> ACCU ", String.valueOf(mCurrentLocation.getAccuracy()));
-//
-////        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-//
-////        updateMarkers(); //todo not needed
-//    }
+    /*@Override
+    public void onLocationChanged(Location location) {
+        mCurrentLocation = location;
+        // LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+    }*/
 
 
     /**
@@ -294,17 +271,20 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onMapReady(GoogleMap map) {
-        Log.e("~~~~~", "*** onMapReady");
+        // Initialize location manager and location provider
         final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         final String provider = LocationManager.GPS_PROVIDER;
+
+        // Initialize main display elements of the screen including map, buttons and search bar
         mMap = map;
         myLoc = (FloatingActionButton) findViewById(R.id.find_my_location);
         warning = (TextView)findViewById(R.id.warning);
         fakeLocation = new Location("");
         startFaking = (FloatingActionButton) findViewById(R.id.start_faking);
+
+        // Modify search bar, add "menu" icon and connect it to navigation drawer
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
-
         ((EditText)autocompleteFragment.getView().findViewById(R.id.place_autocomplete_search_input)).setTextColor(Color.parseColor("#757575"));
         ImageView navDrawer = (ImageView)((LinearLayout)autocompleteFragment.getView()).getChildAt(0);
         navDrawer.setColorFilter(Color.parseColor("#616161"));
@@ -322,33 +302,25 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
 
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
-        // Add markers for nearby places.
-//        updateMarkers(); //todo not needed
 
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
             // Return null here, so that getInfoContents() is called next.
-            public View getInfoWindow(Marker arg0) {
-                return null;
-            }
-
+            public View getInfoWindow(Marker arg0) { return null; }
             @Override
             public View getInfoContents(Marker marker) {
-                Log.e("~~~~~", "*** onMapReady - getInfoContents");
                 // Inflate the layouts for the info window, title and snippet.
                 View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
-
                 TextView title = ((TextView) infoWindow.findViewById(R.id.title));
                 title.setText(marker.getTitle());
-
                 TextView snippet = ((TextView) infoWindow.findViewById(R.id.snippet));
                 snippet.setText(marker.getSnippet());
-
                 return infoWindow;
             }
         });
+
         /*
          * Set the map's camera position to the current location of the device.
          * If the previous state was saved, set the position to the saved state.
@@ -370,14 +342,12 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng point) {
-                // TODO Auto-generated method stub
                 mMap.clear();
                 myLoc.setImageResource(R.mipmap.ic_crosshairs_gps_grey600_24dp);
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.position(point);
                 markerOptions.title("Dropped Pin");
 
-//                mMap.animateCamera(CameraUpdateFactory.newLatLng(point));
                 autocompleteFragment.setText(String.valueOf(String.format("%.6g%n",point.latitude)) + "," + String.valueOf(String.format("%.6g%n",point.longitude)));
                 mMap.addMarker(markerOptions);
                 fakeLocation.setLatitude(point.latitude);
