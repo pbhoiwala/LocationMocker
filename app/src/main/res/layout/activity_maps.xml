@@ -16,6 +16,15 @@
             android:layout_height="wrap_content"
             android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
             />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/addToFavorite"
+            android:layout_gravity="center_vertical|end"
+            android:background="@mipmap/ic_favorite_border_black_24dp"
+            android:layout_marginEnd="48dp"
+            android:contentDescription="Favorites"
+            android:layout_marginRight="48dp" />
     </android.support.v7.widget.CardView>
 
 

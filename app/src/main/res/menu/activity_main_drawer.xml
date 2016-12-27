@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@mipmap/ic_home_black_24dp"
+            android:title="@string/nav_home" />
+        <item
+            android:id="@+id/nav_howto"
+            android:icon="@mipmap/ic_info_black_24dp"
+            android:title="@string/nav_how_to" />
+        <item
+            android:id="@+id/nav_satellite"
+            android:icon="@mipmap/ic_satellite_black_24dp"
+            android:title="@string/nav_satellite" />
+        <item
+            android:id="@+id/nav_favorites"
+            android:icon="@mipmap/ic_favorite_black_24dp"
+            android:title="@string/nav_favorites" />
+
+        <item
+            android:id="@+id/nav_recent"
+            android:icon="@mipmap/ic_history_black_24dp"
+            android:title="@string/nav_recent" />
+
+        <item
+            android:id="@+id/nav_rate"
+            android:icon="@mipmap/ic_star_rate_black_18dp"
+            android:title="@string/nav_rate" />
+        <item
+            android:id="@+id/nav_share"
+            android:icon="@mipmap/ic_share_black_24dp"
+            android:title="@string/nav_share" />
+    </group>
+</menu>

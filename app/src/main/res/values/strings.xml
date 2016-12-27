@@ -1,4 +1,35 @@
 <resources>
-    <string name="app_name">LocationMocker</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="app_name">Location Mocker</string>
+    <string name="title_activity_maps">Location Mocker</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="openDrawer">open_drawer</string>
+    <string name="closeDrawer">close_drawer</string>
+
+    <!-- Navigation Drawer menu labels -->
+    <string name="nav_home">Home</string>
+    <string name="nav_how_to">How to use</string>
+    <string name="nav_satellite">Satellite</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_recent">Recent</string>
+    <string name="nav_rate">Rate this app</string>
+    <string name="nav_share">Share this app</string>
+
+
+    <!-- Toolbar titles when navigation menu item is selected -->
+    <string-array name="nav_item_activity_titles">
+        <item>Home</item>
+        <item>Favorites</item>
+        <item>Recent</item>
+        <item>Rate this app</item>
+        <item>Share this app</item>
+    </string-array>
+
+    <!--<string name="activity_title_about_us">About Us</string>-->
+    <!--<string name="activity_title_privacy_policy">Privacy Policy</string>-->
+    <!--<string name="action_clear_all">Clear All</string>-->
+    <!--<string name="action_logout">Logout</string>-->
+    <!--<string name="action_mark_all_read">Mark All as Read</string>-->
+    <!--<string name="privacy_policy">Privacy Policy</string>-->
 </resources>

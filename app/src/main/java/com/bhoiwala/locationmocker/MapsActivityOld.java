@@ -2,6 +2,7 @@ package com.bhoiwala.locationmocker;
 
 import android.app.AppOpsManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -13,12 +14,25 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,7 +61,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MapsActivityOld extends FragmentActivity implements /*LocationListener,*/ OnMapReadyCallback,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = MapsActivityOld.class.getSimpleName();
     private GoogleMap mMap;
@@ -86,6 +100,16 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
 
+    // navigation drawer code below
+    private DrawerLayout drawer;
+    private Toolbar toolbar;
+    private ActionBarDrawerToggle toggle;
+    private NavigationView navigationView;
+    private Boolean isSatellite = false;
+    private ImageView addFav;
+    // navigation drawer code above
+
+
     private LocationListener lis = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
@@ -113,18 +137,25 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         Log.e("~~~~~", "*** onCreate");
         super.onCreate(savedInstanceState);
 
-        // Retrieve location and camera position from saved instance state.
+       // Retrieve location and camera position from saved instance state.
         if (savedInstanceState != null) {
             mCurrentLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
 
         // Retrieve the content view that renders the map.
-        setContentView(R.layout.activity_maps);
+//        setContentView(R.layout.activity_maps);
+        setContentView(R.layout.activity_main);
         // Build the Play services client for use by the Fused Location Provider and the Places API.
         buildGoogleApiClient();
         mGoogleApiClient.connect();
-
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        drawer = (DrawerLayout)findViewById(R.id.drawer_layout);
+        toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+        navigationView = (NavigationView)findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
 
     }
 
@@ -227,6 +258,14 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         Log.d(TAG, "Play services connection suspended");
     }
 
+    @Override
+    public void onBackPressed(){
+        if(drawer.isDrawerOpen(Gravity.LEFT)){
+            drawer.closeDrawer(Gravity.LEFT);
+        }else {
+            super.onBackPressed();
+        }
+    }
 
     /**
      * Handles the callback when location changes.
@@ -252,6 +291,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      * Manipulates the map when it's available.
      * This callback is triggered when the map is ready to be used.
      */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onMapReady(GoogleMap map) {
         Log.e("~~~~~", "*** onMapReady");
@@ -264,6 +304,22 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         startFaking = (FloatingActionButton) findViewById(R.id.start_faking);
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+        ((EditText)autocompleteFragment.getView().findViewById(R.id.place_autocomplete_search_input)).setTextColor(Color.parseColor("#757575"));
+        ImageView navDrawer = (ImageView)((LinearLayout)autocompleteFragment.getView()).getChildAt(0);
+        navDrawer.setColorFilter(Color.parseColor("#616161"));
+        navDrawer.setImageDrawable(getDrawable(R.mipmap.ic_menu_black_24dp));
+        navDrawer.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                drawer.openDrawer(Gravity.LEFT);
+            }
+        });
+
+        addFav = (ImageView) findViewById(R.id.addToFavorite);
+        addFav.setVisibility(View.INVISIBLE);
+        autocompleteFragment.setHint("Search here");
+
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
         // Add markers for nearby places.
@@ -322,12 +378,23 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                 markerOptions.title("Dropped Pin");
 
 //                mMap.animateCamera(CameraUpdateFactory.newLatLng(point));
+                autocompleteFragment.setText(String.valueOf(String.format("%.6g%n",point.latitude)) + "," + String.valueOf(String.format("%.6g%n",point.longitude)));
                 mMap.addMarker(markerOptions);
                 fakeLocation.setLatitude(point.latitude);
                 fakeLocation.setLongitude(point.longitude);
                 fakeLocation.setAccuracy(FAKE_ACCURACY);
+                addFav.setVisibility(View.VISIBLE);
+                addFav.setColorFilter(Color.parseColor("#616161"));
+                addFav.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                       askForName();
+
+                    }
+                });
             }
         });
+
         //parth code
         myLoc.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -347,6 +414,8 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             }
         });
 
+
+
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
@@ -362,7 +431,6 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                 fakeLocation.setLongitude(place.getLatLng().longitude);
                 fakeLocation.setAccuracy(FAKE_ACCURACY);
             }
-
             @Override
             public void onError(Status status) {
                 // TODO: Handle the error.
@@ -420,6 +488,47 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             }
         });
         warningCheck();
+    }
+
+    public void askForName(){
+        LayoutInflater li = LayoutInflater.from(this);
+        View promptsView = li.inflate(R.layout.favorite_name, null);
+        final EditText favPlaceName = (EditText) promptsView.findViewById(R.id.placeName);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setView(promptsView);
+        alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+                    public void onClick(DialogInterface dialog, int id) {
+                        String placeName = favPlaceName.getText().toString();
+                        forceCloseKeyboard(favPlaceName);
+                        if(placeName.equals("")){toast("Name cannot be blank");}
+                        else{
+                            saveNameToDB(placeName);
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        forceCloseKeyboard(favPlaceName);
+                        dialog.cancel();
+                    }
+                });
+
+        final AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void saveNameToDB(String placeName){
+        toast(placeName + " saved to Favorites");
+        addFav.setImageDrawable(getDrawable(R.mipmap.ic_favorite_black_24dp));
+        addFav.setColorFilter(Color.parseColor("#FF0000"));
+    }
+
+    public void forceCloseKeyboard(EditText editText) {
+        final InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(editText.getWindowToken(), 0);
     }
 
     public void showButton(){
@@ -807,6 +916,41 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
+    public void toggleMapType(){
+        if(!isSatellite){
+            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        }else{
+            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        }
+        isSatellite = !isSatellite;
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.nav_home) {
+            toast("Home");
+        } else if (id == R.id.nav_howto) {
+            toast("How To");
+        } else if (id == R.id.nav_satellite) {
+            toast("Satellite");
+            toggleMapType();
+        } else if (id == R.id.nav_favorites) {
+            toast("Favorites");
+        } else if (id == R.id.nav_recent) {
+            toast("Recent");
+        } else if (id == R.id.nav_rate) {
+            toast("Rate");
+        } else if (id == R.id.nav_share) {
+            toast("Sharing");
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
 }
 
 // // TODO: 12/13/2016 - add ability to change map type from "regular" to "satellite"
