@@ -3,6 +3,7 @@ package com.bhoiwala.locationmocker;
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -79,7 +80,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private Boolean isMocking = false;
     public float FAKE_ACCURACY = (float) 3.0f;
     private Realm realm;
-    ArrayList<Favorites> listOfFavorites;
+
 
     // The entry point to Google Play services, used by the Places API and Fused Location Provider.
     private GoogleApiClient mGoogleApiClient;
@@ -106,6 +107,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
     private static final String KEY_SEARCH_BAR = "search";
+    private static final String KEY_DROPPED_PIN = "dropped";
 
     // Tools for navigation drawer
     private DrawerLayout drawer;
@@ -140,6 +142,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             mCurrentLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
             searchBarText = savedInstanceState.getString(KEY_SEARCH_BAR);
+            droppedMarker = savedInstanceState.getParcelable(KEY_DROPPED_PIN);
         }
 
         // Retrieve the content view that renders the map.
@@ -207,6 +210,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     @Override
     protected void onPause() {
         super.onPause();
+        mCameraPosition = mMap.getCameraPosition();
         /*if (mGoogleApiClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(
                     mGoogleApiClient, this);
@@ -222,6 +226,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
             outState.putParcelable(KEY_LOCATION, mCurrentLocation);
             outState.putString(KEY_SEARCH_BAR, searchBarText);
+            outState.putParcelable(KEY_DROPPED_PIN, droppedMarker);
             super.onSaveInstanceState(outState);
         }
     }
@@ -299,13 +304,15 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         warning = (TextView)findViewById(R.id.warning);
         droppedMarker = new Location("");
         startFaking = (FloatingActionButton) findViewById(R.id.start_faking);
-
-        // Modify search bar
+        addFav = (ImageView) findViewById(R.id.addToFavorite);
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+        // Modify search bar
         autocompleteFragment.setHint("Search here");
         searchBar = ((EditText)autocompleteFragment.getView().findViewById(R.id.place_autocomplete_search_input));
         searchBar.setTextColor(Color.parseColor("#757575"));
+
         // Initialize Navigation Drawer
         ImageView navDrawer = (ImageView)((LinearLayout)autocompleteFragment.getView()).getChildAt(0);
         navDrawer.setColorFilter(Color.parseColor("#616161"));
@@ -317,8 +324,18 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             }
         });
 
-        addFav = (ImageView) findViewById(R.id.addToFavorite);
-        addFav.setVisibility(View.INVISIBLE);
+        ImageView clearButton = (ImageView)((LinearLayout)autocompleteFragment.getView()).getChildAt(2);
+        clearButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                mMap.clear();
+                droppedMarker = null;
+                refreshFavoriteButton();
+            }
+        });
+
+
+        refreshFavoriteButton();
 
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
@@ -607,7 +624,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         }
     }
 
-    /**
+    /*
      * Checks if required permissions are allowed and proper settings are enabled
      * Displays a warning on the bottom if there's a problem
      */
@@ -752,6 +769,8 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             toggleMapType();
         } else if (id == R.id.nav_favorites) {
             toast("Favorites");
+            Intent intent = new Intent(MapsActivityOld.this, FavoritesActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_recent) {
             toast("Recent");
         } else if (id == R.id.nav_rate) {
