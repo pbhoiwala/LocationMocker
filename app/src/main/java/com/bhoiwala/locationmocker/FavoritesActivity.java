@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -35,7 +36,7 @@ public class FavoritesActivity extends AppCompatActivity {
     private void refreshListOfFavorites() {
         RealmResults<Favorites> favorites = realm.where(Favorites.class).findAll();
         listOfFavorites = new ArrayList<>();
-        for(Favorites eachPlace: favorites){
+        for(Favorites eachPlace : favorites) {
             listOfFavorites.add(eachPlace);
         }
         FavoriteAdapter listAdapter = new FavoriteAdapter(this, listOfFavorites);
@@ -46,6 +47,12 @@ public class FavoritesActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Favorites listItem = (Favorites) listView.getItemAtPosition(i);
                 toast(listItem.placeName);
+                Intent intent = new Intent(FavoritesActivity.this, MapsActivityOld.class);
+                intent.putExtra("from_id", "favorites");
+                intent.putExtra("place_name", listItem.placeName);
+                intent.putExtra("place_lati", listItem.latitude);
+                intent.putExtra("place_long", listItem.longitude);
+                startActivity(intent);
             }
         });
     }

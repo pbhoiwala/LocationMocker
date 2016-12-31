@@ -9,18 +9,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/tvPlaceName"
-        android:textSize="20sp"
-        android:textColor="@color/cast_expanded_controller_background_color" />
-
+        android:textSize="18sp"
+        android:textColor="@color/cast_expanded_controller_background_color"
+        android:textStyle="normal|bold"
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="16dp"/>
     <TextView
         android:text="TextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/tvLati" />
+        android:id="@+id/tvCoordinates"
+        android:layout_marginLeft="16dp"
+        android:layout_marginBottom="4dp" />
 
-    <TextView
-        android:text="TextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/tvLongi" />
 </LinearLayout>

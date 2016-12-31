@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Camera;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
@@ -58,13 +59,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import io.realm.Realm;
 import io.realm.RealmQuery;
+import io.realm.RealmResults;
 
 public class MapsActivityOld extends FragmentActivity implements /*LocationListener,*/ OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, NavigationView.OnNavigationItemSelectedListener {
@@ -80,7 +81,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private Boolean isMocking = false;
     public float FAKE_ACCURACY = (float) 3.0f;
     private Realm realm;
-
+    Intent intent;
 
     // The entry point to Google Play services, used by the Places API and Fused Location Provider.
     private GoogleApiClient mGoogleApiClient;
@@ -167,6 +168,20 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         navigationView = (NavigationView)findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         addFav = (ImageView)findViewById(R.id.addToFavorite);
+        refreshFavoriteButton();
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void goToFavoriteLocation(Favorites favPlace) {
+        clearMap();
+        myLocationButton.setImageResource(R.mipmap.ic_crosshairs_gps_grey600_24dp);
+        searchBarText = favPlace.placeName;
+        autocompleteFragment.setText(searchBarText);
+        LatLng latLng = new LatLng(favPlace.latitude, favPlace.longitude);
+        mMap.addMarker(new MarkerOptions().position(latLng));
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+        prepareFakeLocation(latLng);
         refreshFavoriteButton();
     }
 
@@ -294,6 +309,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onMapReady(GoogleMap map) {
+
         // Initialize location manager and location provider
         final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         final String provider = LocationManager.GPS_PROVIDER;
@@ -302,7 +318,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         mMap = map;
         myLocationButton = (FloatingActionButton) findViewById(R.id.find_my_location);
         warning = (TextView)findViewById(R.id.warning);
-        droppedMarker = new Location("");
+//        droppedMarker = new Location("");
         startFaking = (FloatingActionButton) findViewById(R.id.start_faking);
         addFav = (ImageView) findViewById(R.id.addToFavorite);
         autocompleteFragment = (PlaceAutocompleteFragment)
@@ -328,12 +344,9 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         clearButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                mMap.clear();
-                droppedMarker = null;
-                refreshFavoriteButton();
+                clearMap();
             }
         });
-
 
         refreshFavoriteButton();
 
@@ -392,12 +405,6 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                 mMap.addMarker(markerOptions);
                 prepareFakeLocation(point);
                 refreshFavoriteButton();
-                addFav.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                       askForName();
-                    }
-                });
             }
         });
 
@@ -417,7 +424,16 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                 }
             }
         });
-
+        addFav.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                if(checkIfMarkerExistsInFavorites()){
+                    removePlaceFromFavorites();
+                }else{
+                    askForName();
+                }
+            }
+        });
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
@@ -429,16 +445,9 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                 mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
                 prepareFakeLocation(latLng);
                 refreshFavoriteButton();
-                addFav.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                        askForName();
-                    }
-                });
             }
             @Override
             public void onError(Status status) {
-                // TODO: Handle the error.
                 Log.i(TAG, "An error occurred: " + status);
             }
         });
@@ -467,6 +476,33 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             }
         });
         warningCheck();
+        isCallFromDifferentActivity();
+    }
+
+    /**
+     * Checks Whether this activity is called from a different activity.
+     * If so, then 'from_id' is checked which determines what to do.
+     */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void isCallFromDifferentActivity(){
+        Intent intent = this.getIntent();
+        if(intent.hasExtra("from_id")){
+            if (intent.getStringExtra("from_id").equals("favorites")) {
+                Favorites favPlace = new Favorites();
+                favPlace.placeName = intent.getStringExtra("place_name");
+                favPlace.latitude = intent.getDoubleExtra("place_lati", 0.0);
+                favPlace.longitude = intent.getDoubleExtra("place_long", 0.0);
+                goToFavoriteLocation(favPlace);
+            }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void clearMap() {
+        mMap.clear();
+        droppedMarker = null;
+        refreshFavoriteButton();
+        autocompleteFragment.setText("");
     }
 
     /**
@@ -478,9 +514,8 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         if(droppedMarker == null){
             addFav.setVisibility(View.INVISIBLE);
         }else{
-            Boolean exists = checkIfExists(droppedMarker);
             addFav.setVisibility(View.VISIBLE);
-            if(exists){
+            if(checkIfMarkerExistsInFavorites()){
                 addFav.setImageDrawable(getDrawable(R.mipmap.ic_favorite_black_24dp));
                 addFav.setColorFilter(Color.parseColor("#FF0000"));
             }else{
@@ -490,15 +525,24 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         }
     }
 
+    /**
+     * Set's dropped marker's latitude and longitude
+     */
     public void prepareFakeLocation(LatLng point){
+        droppedMarker = new Location("");
         droppedMarker.setLatitude(point.latitude);
         droppedMarker.setLongitude(point.longitude);
     }
 
+    /**
+     * Gets called when user clicks 'heart' button.
+     * Asks for placeName and saves the dropped marker location to favorites
+     */
     public void askForName(){
         LayoutInflater li = LayoutInflater.from(this);
         View promptsView = li.inflate(R.layout.favorite_name, null);
         final EditText favPlaceName = (EditText) promptsView.findViewById(R.id.placeName);
+        favPlaceName.setText(searchBarText);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setView(promptsView);
         alertDialogBuilder.setCancelable(false)
@@ -510,6 +554,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                         if(placeName.equals("")){toast("Name cannot be blank");}
                         else{
                             addPlaceToFavoritesDB(placeName);
+                            refreshFavoriteButton();
                         }
                     }})
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -521,14 +566,31 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         alertDialog.show();
     }
 
-    public Boolean checkIfExists(Location point){
-        RealmQuery<Favorites> courses = realm.where(Favorites.class).equalTo("latitude", point.getLatitude()).equalTo("longitude", point.getLongitude());
+    /**
+     * Removes favorite place from favorites DB
+     */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void removePlaceFromFavorites(){
+        RealmResults<Favorites> favorite = realm.where(Favorites.class).equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude()).findAll();
+        realm.beginTransaction();
+        favorite.deleteAllFromRealm();
+        realm.commitTransaction();
+        refreshFavoriteButton();
+    }
+
+    /**
+     * Checks if 'dropped marker' exists in Favorites DB
+     * return True if exists and False otherwise
+     * NOTE: There can only be ONE dropped marker at any given time
+     */
+    public Boolean checkIfMarkerExistsInFavorites(){
+        RealmQuery<Favorites> courses = realm.where(Favorites.class).equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude());
         return courses.count() != 0;
     }
 
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void addPlaceToFavoritesDB(final String placeName){
+    public void addPlaceToFavoritesDB_asynchronous(final String placeName){
         realm.executeTransactionAsync(new Realm.Transaction(){
             @Override
             public void execute(Realm realm){
@@ -541,6 +603,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             @Override
             public void onSuccess(){
                 toast(placeName + " successfully saved in favorites");
+                refreshFavoriteButton();
             }
         }, new Realm.Transaction.OnError(){
             @Override
@@ -548,7 +611,15 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                 Log.e("ERROR", error.getMessage());
             }
         });
-        refreshFavoriteButton();
+    }
+
+    public void addPlaceToFavoritesDB(final String placeName){
+        realm.beginTransaction();
+        final Favorites favPlace = realm.createObject(Favorites.class);
+        favPlace.placeName = placeName;
+        favPlace.latitude = droppedMarker.getLatitude();
+        favPlace.longitude = droppedMarker.getLongitude();
+        realm.commitTransaction();
     }
 
     public void setupStartStopButton(){

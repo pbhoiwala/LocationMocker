@@ -30,13 +30,16 @@ public class FavoriteAdapter extends ArrayAdapter<Favorites>{
         }
         // Lookup view for data population
         TextView tvPlaceName = (TextView) convertView.findViewById(R.id.tvPlaceName);
-        TextView tvLatitude = (TextView) convertView.findViewById(R.id.tvLati);
-        TextView tvLongitude = (TextView) convertView.findViewById(R.id.tvLongi);
+        TextView tvCoordinates = (TextView) convertView.findViewById(R.id.tvCoordinates);
 
         // Populate the data into the template view using the data object
-        tvPlaceName.setText(favorites.placeName);
-        tvLatitude.setText(String.valueOf(favorites.latitude));
-        tvLongitude.setText(String.valueOf(favorites.longitude));
+        // Format items: convert to string, remove extra break-lines and round long double values
+        String placeName = favorites.placeName.replace("\n", "").replace("\r","");
+        String lati = (String.valueOf(String.format("%.6g%n",favorites.latitude))).replace("\n","").replace("\r","");
+        String longi = (String.valueOf(String.format("%.6g%n",favorites.longitude))).replace("\n","").replace("\r","");
+        String coordinates = "(" + lati + ", " + longi + ")";
+        tvPlaceName.setText(placeName);
+        tvCoordinates.setText(coordinates);
 
         // Return the completed view to render on screen
         return convertView;
