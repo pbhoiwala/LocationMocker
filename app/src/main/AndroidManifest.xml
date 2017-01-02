@@ -49,7 +49,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".FavoritesActivity"></activity>
+        <activity android:name=".MyListViewActivity"></activity>
+        <activity android:name=".HowToActivity"></activity>
     </application>
-
 </manifest>

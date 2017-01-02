@@ -6,17 +6,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.graphics.Camera;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewStub;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -38,7 +40,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bhoiwala.locationmocker.realm.Favorites;
+//import com.bhoiwala.locationmocker.realm.Favorites;
+import com.bhoiwala.locationmocker.realm.MyLocation;
+//import com.bhoiwala.locationmocker.realm.Recent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import android.location.LocationListener;
@@ -74,14 +78,13 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
     private FloatingActionButton myLocationButton;
-    private FloatingActionButton startFaking;
+    private FloatingActionButton startFakingButton;
     PlaceAutocompleteFragment autocompleteFragment;
     private Location droppedMarker = null;
     private TextView warning;
     private Boolean isMocking = false;
     public float FAKE_ACCURACY = (float) 3.0f;
     private Realm realm;
-    Intent intent;
 
     // The entry point to Google Play services, used by the Places API and Fused Location Provider.
     private GoogleApiClient mGoogleApiClient;
@@ -111,14 +114,15 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     private static final String KEY_DROPPED_PIN = "dropped";
 
     // Tools for navigation drawer
-    private DrawerLayout drawer;
-    private Toolbar toolbar;
-    private ActionBarDrawerToggle toggle;
-    private NavigationView navigationView;
+    protected DrawerLayout drawer;
+    protected Toolbar toolbar;
+    protected ActionBarDrawerToggle toggle;
+    protected NavigationView navigationView;
     private Boolean isSatellite = false;
     private ImageView addFav;
     private EditText searchBar = null;
     private String searchBarText = "";
+    private Boolean isExtended = false;
     // Tools for navigation drawer
 
     // Location Listener when mocking location (basically useless)
@@ -150,6 +154,9 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         // setContentView(R.layout.activity_maps);  use this when not using navigation drawer
         // activity_main implements navigation drawer
         setContentView(R.layout.activity_main);
+        ViewStub stub = (ViewStub)findViewById(R.id.layout_stub);
+        stub.setLayoutResource(R.layout.activity_maps);
+        View inflated = stub.inflate();
 
         // Build the Play services client for use by the Fused Location Provider and the Places API.
         buildGoogleApiClient();
@@ -173,12 +180,12 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void goToFavoriteLocation(Favorites favPlace) {
+    private void goToLocation(MyLocation goToLocation) {
         clearMap();
         myLocationButton.setImageResource(R.mipmap.ic_crosshairs_gps_grey600_24dp);
-        searchBarText = favPlace.placeName;
+        searchBarText = goToLocation.placeName;
         autocompleteFragment.setText(searchBarText);
-        LatLng latLng = new LatLng(favPlace.latitude, favPlace.longitude);
+        LatLng latLng = new LatLng(goToLocation.latitude, goToLocation.longitude);
         mMap.addMarker(new MarkerOptions().position(latLng));
         mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
         prepareFakeLocation(latLng);
@@ -225,7 +232,9 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     @Override
     protected void onPause() {
         super.onPause();
-        mCameraPosition = mMap.getCameraPosition();
+        if(mMap != null) {
+            mCameraPosition = mMap.getCameraPosition();
+        }
         /*if (mGoogleApiClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(
                     mGoogleApiClient, this);
@@ -319,7 +328,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         myLocationButton = (FloatingActionButton) findViewById(R.id.find_my_location);
         warning = (TextView)findViewById(R.id.warning);
 //        droppedMarker = new Location("");
-        startFaking = (FloatingActionButton) findViewById(R.id.start_faking);
+        startFakingButton = (FloatingActionButton) findViewById(R.id.start_faking);
         addFav = (ImageView) findViewById(R.id.addToFavorite);
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
@@ -384,7 +393,6 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
                             mCurrentLocation.getLongitude()), DEFAULT_ZOOM));
         } else {
             Log.d(TAG, "Current location is null. Using defaults.");
-            warning.setText("Warning: Enable Location services");
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
         }
@@ -462,15 +470,17 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             }
         });
 
-        startFaking.setOnClickListener(new View.OnClickListener() {
+        startFakingButton.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             // SecurityException will be thrown when MOCK Location is disabled
             public void onClick(View view) throws SecurityException {
-                if(!isMocking){
+                if(!isMocking && droppedMarker != null){
                     startFakingLocation(lm, provider);
-                }else{
+                }else if(isMocking){
                     stopFakingLocation(lm, provider);
+                }else{
+                    toast("Please choose a location to mock");
                 }
                 setupStartStopButton();
             }
@@ -487,12 +497,12 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     public void isCallFromDifferentActivity(){
         Intent intent = this.getIntent();
         if(intent.hasExtra("from_id")){
-            if (intent.getStringExtra("from_id").equals("favorites")) {
-                Favorites favPlace = new Favorites();
-                favPlace.placeName = intent.getStringExtra("place_name");
-                favPlace.latitude = intent.getDoubleExtra("place_lati", 0.0);
-                favPlace.longitude = intent.getDoubleExtra("place_long", 0.0);
-                goToFavoriteLocation(favPlace);
+            if (intent.getStringExtra("from_id").equals("ListViewActivity")) {
+                MyLocation goToPlace = new MyLocation();
+                goToPlace.placeName = intent.getStringExtra("place_name");
+                goToPlace.latitude = intent.getDoubleExtra("place_lati", 0.0);
+                goToPlace.longitude = intent.getDoubleExtra("place_long", 0.0);
+                goToLocation(goToPlace);
             }
         }
     }
@@ -540,7 +550,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      */
     public void askForName(){
         LayoutInflater li = LayoutInflater.from(this);
-        View promptsView = li.inflate(R.layout.favorite_name, null);
+        View promptsView = li.inflate(R.layout.dialog_favorite_name, null);
         final EditText favPlaceName = (EditText) promptsView.findViewById(R.id.placeName);
         favPlaceName.setText(searchBarText);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
@@ -571,12 +581,14 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void removePlaceFromFavorites(){
-        RealmResults<Favorites> favorite = realm.where(Favorites.class).equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude()).findAll();
+//        RealmResults<Favorites> favorite = realm.where(Favorites.class).equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude()).findAll();
+        RealmResults<MyLocation> favorite = realm.where(MyLocation.class).equalTo("id", "FAVORITES").equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude()).findAll();
         realm.beginTransaction();
         favorite.deleteAllFromRealm();
         realm.commitTransaction();
         refreshFavoriteButton();
     }
+
 
     /**
      * Checks if 'dropped marker' exists in Favorites DB
@@ -584,38 +596,22 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
      * NOTE: There can only be ONE dropped marker at any given time
      */
     public Boolean checkIfMarkerExistsInFavorites(){
-        RealmQuery<Favorites> courses = realm.where(Favorites.class).equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude());
-        return courses.count() != 0;
+//        RealmQuery<Favorites> courses = realm.where(Favorites.class).equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude());
+        RealmQuery<MyLocation> favorites = realm.where(MyLocation.class).equalTo("id", "FAVORITES").equalTo("latitude", droppedMarker.getLatitude()).equalTo("longitude", droppedMarker.getLongitude());
+        return favorites.count() != 0;
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void addPlaceToFavoritesDB_asynchronous(final String placeName){
-        realm.executeTransactionAsync(new Realm.Transaction(){
-            @Override
-            public void execute(Realm realm){
-                Favorites favorite = realm.createObject(Favorites.class);
-                favorite.placeName = placeName;
-                favorite.latitude = droppedMarker.getLatitude();
-                favorite.longitude = droppedMarker.getLongitude();
-            }
-        }, new Realm.Transaction.OnSuccess(){
-            @Override
-            public void onSuccess(){
-                toast(placeName + " successfully saved in favorites");
-                refreshFavoriteButton();
-            }
-        }, new Realm.Transaction.OnError(){
-            @Override
-            public void onError(Throwable error){
-                Log.e("ERROR", error.getMessage());
-            }
-        });
-    }
 
     public void addPlaceToFavoritesDB(final String placeName){
-        realm.beginTransaction();
+        /*realm.beginTransaction();
         final Favorites favPlace = realm.createObject(Favorites.class);
+        favPlace.placeName = placeName;
+        favPlace.latitude = droppedMarker.getLatitude();
+        favPlace.longitude = droppedMarker.getLongitude();
+        realm.commitTransaction();*/
+        realm.beginTransaction();
+        final MyLocation favPlace = realm.createObject(MyLocation.class);
+        favPlace.id = "FAVORITES";
         favPlace.placeName = placeName;
         favPlace.latitude = droppedMarker.getLatitude();
         favPlace.longitude = droppedMarker.getLongitude();
@@ -625,13 +621,13 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
     public void setupStartStopButton(){
         if(isMocking){
             //show red button to stop
-            startFaking.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(MapsActivityOld.this, R.color.red_tint )));
-            startFaking.setImageResource(R.mipmap.ic_stop_white_24dp);
+            startFakingButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(MapsActivityOld.this, R.color.red_tint )));
+            startFakingButton.setImageResource(R.mipmap.ic_stop_white_24dp);
 
         }else{
             //show green button to start
-            startFaking.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(MapsActivityOld.this, R.color.green_tint )));
-            startFaking.setImageResource(R.mipmap.ic_play_arrow_white_24dp);
+            startFakingButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(MapsActivityOld.this, R.color.green_tint )));
+            startFakingButton.setImageResource(R.mipmap.ic_play_arrow_white_24dp);
         }
     }
 
@@ -668,6 +664,7 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
             newLocation.setTime(System.currentTimeMillis());
             newLocation.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
             mCurrentLocation = newLocation;
+            addDroppedMarkerToRecent();
             final Timer t = new Timer();
             t.scheduleAtFixedRate(new TimerTask() {
                 @Override
@@ -695,11 +692,24 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         }
     }
 
+    /**
+     * Adds location details to recent when user starts a Mock
+     */
+    public void addDroppedMarkerToRecent(){
+        realm.beginTransaction();
+        final MyLocation mockedLocation = realm.createObject(MyLocation.class);
+        mockedLocation.id = "RECENT";
+        mockedLocation.placeName = searchBarText;
+        mockedLocation.latitude = droppedMarker.getLatitude();
+        mockedLocation.longitude = droppedMarker.getLongitude();
+        realm.commitTransaction();
+    }
+
     /*
      * Checks if required permissions are allowed and proper settings are enabled
      * Displays a warning on the bottom if there's a problem
      */
-    void warningCheck() {
+    public void warningCheck2() {
         Boolean mockingOn = isMockLocationEnabled();
         String war1 = "", war2 = "";
         if (!mLocationPermissionGranted) {
@@ -713,14 +723,54 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
         if (!war1.equals("") || !war2.equals("")) {
             warning.setVisibility(View.VISIBLE);
             warning.setText(war1 + war2);
-            startFaking.setVisibility(View.INVISIBLE);
+            startFakingButton.setVisibility(View.INVISIBLE);
         } else {
             warning.setVisibility(View.INVISIBLE);
-            startFaking.setVisibility(View.VISIBLE);
+            startFakingButton.setVisibility(View.VISIBLE);
         }
-        warning.setVisibility(View.INVISIBLE);
-        startFaking.setVisibility(View.VISIBLE);
     }
+
+    public void warningCheck(){
+        warning.setVisibility(View.INVISIBLE);
+
+        if(!mLocationPermissionGranted){
+            Snackbar.make(findViewById(android.R.id.content), "Location permission is not allowed", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("SETTINGS", new View.OnClickListener(){
+                        @Override
+                        public void onClick(View v){
+                            getDeviceLocation();
+                        }
+                    })
+                    .setActionTextColor(Color.RED)
+                    .show();
+        }
+        if(!isMockLocationEnabled()){
+            Snackbar.make(findViewById(android.R.id.content), "Mock location setting is disabled", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("SETTINGS", new View.OnClickListener(){
+                        @Override
+                        public void onClick(View v){
+                            toast("Enabling mock");
+                        }
+                    })
+                    .setActionTextColor(Color.RED)
+                    .show();
+        }
+        if(mCurrentLocation == null){
+            Snackbar.make(findViewById(android.R.id.content), "GPS is off", Snackbar.LENGTH_LONG)
+                    .setAction("RETRY", new View.OnClickListener(){
+                        @Override
+                        public void onClick(View v){
+                            toast("Turning on GPS");
+                        }
+                    })
+                    .setActionTextColor(Color.RED)
+                    .show();
+        }
+
+
+    }
+
+
 
     /**
      * Builds a GoogleApiClient.
@@ -833,21 +883,39 @@ public class MapsActivityOld extends FragmentActivity implements /*LocationListe
 
         if (id == R.id.nav_home) {
             toast("Home");
+            drawer.closeDrawer(GravityCompat.START);
         } else if (id == R.id.nav_howto) {
             toast("How To");
+            Intent intent = new Intent(MapsActivityOld.this, HowToActivity.class);
+            intent.putExtra("from_id", "HOW_TO");
+            startActivity(intent);
         } else if (id == R.id.nav_satellite) {
             toast("Satellite");
             toggleMapType();
         } else if (id == R.id.nav_favorites) {
             toast("Favorites");
-            Intent intent = new Intent(MapsActivityOld.this, FavoritesActivity.class);
+            Intent intent = new Intent(MapsActivityOld.this, MyListViewActivity.class);
+            intent.putExtra("from_id", "FAVORITES");
             startActivity(intent);
         } else if (id == R.id.nav_recent) {
             toast("Recent");
+            Intent intent = new Intent(MapsActivityOld.this, MyListViewActivity.class);
+            intent.putExtra("from_id", "RECENT");
+            startActivity(intent);
         } else if (id == R.id.nav_rate) {
             toast("Rate");
+            Intent rate = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.bhoiwala.grades.gradetracker"));
+            startActivity(rate);
         } else if (id == R.id.nav_share) {
             toast("Sharing");
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("text/plain");
+            i.putExtra(Intent.EXTRA_SUBJECT, "Location Mocker");
+            String sAux = "\nHey, check out Location Mocker. This android app can mock you current location " +
+                    "in real time.\n\n";
+            sAux = sAux + "https://play.google.com/store/apps/details?id=com.bhoiwala.grades.gradetracker \n\n";
+            i.putExtra(Intent.EXTRA_TEXT, sAux);
+            startActivity(Intent.createChooser(i, "Share via"));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
