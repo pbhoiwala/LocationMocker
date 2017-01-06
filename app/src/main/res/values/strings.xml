@@ -10,11 +10,18 @@
     <!-- Navigation Drawer menu labels -->
     <string name="nav_home">Home</string>
     <string name="nav_how_to">How to use</string>
+    <string name="nav_enterCoordinates">Enter coordinates</string>
     <string name="nav_satellite">Satellite</string>
     <string name="nav_favorites">Favorites</string>
     <string name="nav_recent">Recent</string>
     <string name="nav_rate">Rate this app</string>
     <string name="nav_share">Share this app</string>
+
+    <!--Activity intent IDs-->
+    <string name="idFav">FAVORITES</string>
+    <string name="idRec">RECENT</string>
+    <string name="idHow">HOW_TO</string>
+
 
 
     <!-- Toolbar titles when navigation menu item is selected -->

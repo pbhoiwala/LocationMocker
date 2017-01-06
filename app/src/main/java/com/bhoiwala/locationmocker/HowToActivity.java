@@ -67,12 +67,12 @@ public class HowToActivity extends AppCompatActivity implements NavigationView.O
         } else if (id == R.id.nav_favorites) {
             toast("Favorites");
             Intent intent = new Intent(HowToActivity.this, MyListViewActivity.class);
-            intent.putExtra("from_id", "FAVORITES");
+            intent.putExtra("from_id", MyStrings.favID);
             startActivity(intent);
         } else if (id == R.id.nav_recent) {
             toast("Recent");
             Intent intent = new Intent(HowToActivity.this, MyListViewActivity.class);
-            intent.putExtra("from_id", "RECENT");
+            intent.putExtra("from_id", MyStrings.recID);
             startActivity(intent);
         } else if (id == R.id.nav_rate) {
             toast("Rate");

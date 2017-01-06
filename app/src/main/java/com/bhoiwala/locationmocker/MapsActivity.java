@@ -177,8 +177,8 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         myLoc = (FloatingActionButton) findViewById(R.id.find_my_location);
         fakeLocation = new Location("");
         startFaking = (FloatingActionButton) findViewById(R.id.start_faking);
-        autocompleteFragment = (PlaceAutocompleteFragment)
-                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+//        autocompleteFragment = (PlaceAutocompleteFragment)
+//                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override

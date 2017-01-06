@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        >
+        android:id="@+id/cardViewID">
         <fragment
             android:id="@+id/place_autocomplete_fragment"
             android:layout_width="match_parent"
@@ -24,7 +24,8 @@
             android:background="@mipmap/ic_favorite_border_black_24dp"
             android:layout_marginEnd="48dp"
             android:contentDescription="Favorites"
-            android:layout_marginRight="48dp" />
+            android:layout_marginRight="64dp" />
+
     </android.support.v7.widget.CardView>
 
 
@@ -35,20 +36,6 @@
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_gravity="bottom"
-            android:textColor="@color/cardview_light_background"
-            android:background="@android:color/holo_red_light"
-            android:id="@+id/warning"
-            android:text="A warning will be displayed here."
-            android:fontFamily="sans-serif"
-            android:textSize="20sp"
-            android:textAlignment="center" />
-
-
 
 
     <!--<TextView-->

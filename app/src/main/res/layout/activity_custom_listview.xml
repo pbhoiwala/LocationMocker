@@ -18,4 +18,12 @@
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
         app:menu="@menu/activity_main_drawer" />
+
+    <ViewStub
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/layout_stub2"
+        android:inflatedId="@+id/main_layout2"/>
+
+
 </LinearLayout>

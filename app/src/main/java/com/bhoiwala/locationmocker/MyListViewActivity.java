@@ -1,30 +1,38 @@
 package com.bhoiwala.locationmocker;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.annotation.StringRes;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewStub;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bhoiwala.locationmocker.adapters.MyLocationAdapter;
 import com.bhoiwala.locationmocker.realm.MyLocation;
 import com.google.common.base.CaseFormat;
+import com.bhoiwala.locationmocker.MyStrings;
 
 import java.util.ArrayList;
 
@@ -40,6 +48,7 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
     private Toolbar toolbar;
     DrawerLayout drawer;
     ActionBarDrawerToggle toggle;
+    MyStrings s = new MyStrings();
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -61,34 +70,31 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
 
         Intent intent = this.getIntent();
         String from_id = intent.getStringExtra("from_id");
-       /* ViewStub stub = (ViewStub)findViewById(R.id.layout_stub);
-        stub.setLayoutResource(R.layout.activity_custom_listview);
-        View inflated = stub.inflate();*/
+
 
 
         realm = Realm.getDefaultInstance();
-
         ab = getSupportActionBar();
         ab.setTitle(CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, from_id));
         ab.setDisplayHomeAsUpEnabled(true);
-
-
-
 
         refreshList(from_id);
 
     }
 
     public void refreshList(final String from_id){
+        final ListView listView = (ListView) findViewById(R.id.myList);
         RealmResults<MyLocation> myLocations = realm.where(MyLocation.class).equalTo("id", from_id).findAll();
         listOfLocations = new ArrayList<>();
         for(MyLocation myLocation: myLocations){
             listOfLocations.add(myLocation);
         }
+        if(listOfLocations.size() == 0){
+            toast("No items to display");
+        }
         MyLocationAdapter listAdapter = new MyLocationAdapter(this, listOfLocations);
-        final ListView listView = (ListView)findViewById(R.id.myList);
         listView.setAdapter(listAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 MyLocation listItem = (MyLocation) listView.getItemAtPosition(i);
@@ -101,6 +107,38 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
                 startActivity(intent);
             }
         });
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            String from = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, from_id);
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int i, long l) {
+                new AlertDialog.Builder(context)
+                        .setTitle("Remove place")
+                        .setMessage("Are you sure you want to remove this place from " + from + "?")
+                        .setPositiveButton("REMOVE", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                MyLocation placeToRemove = (MyLocation)listView.getItemAtPosition(i);
+                                deleteItemFromDB(from_id, placeToRemove);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // do nothing
+                            }
+                        })
+                        .show();
+                return true;
+            }
+        });
+    }
+
+    private void deleteItemFromDB(String from_id, MyLocation placeToRemove) {
+        String from = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, from_id);
+        toast(placeToRemove.placeName + " removed from " + from);
+        RealmResults<MyLocation> getLocation = realm.where(MyLocation.class).equalTo("id", from_id).equalTo("latitude", placeToRemove.latitude).equalTo("longitude", placeToRemove.longitude).findAll();
+        realm.beginTransaction();
+        getLocation.deleteAllFromRealm();
+        realm.commitTransaction();
+        refreshList(from_id);
     }
 
     public void toast(String message){
@@ -146,23 +184,29 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
             toast("Home");
             Intent intent = new Intent (MyListViewActivity.this, MapsActivityOld.class);
             startActivity(intent);
+
         } else if (id == R.id.nav_howto){
             toast("How To");
             Intent intent = new Intent(MyListViewActivity.this, HowToActivity.class);
-            intent.putExtra("from_id", "HOW_TO");
+            intent.putExtra("from_id", MyStrings.howID);
             startActivity(intent);
+
         } else if(id == R.id.nav_satellite){
             toast("Unable to change the view from this page");
+
         } else if(id == R.id.nav_favorites){
-            refreshList("FAVORITES");
-            ab.setTitle("Favorites");
+            refreshList(MyStrings.favID);
+            ab.setTitle(CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, MyStrings.favID));
+
         } else if(id == R.id.nav_recent){
-            refreshList("RECENT");
-            ab.setTitle("Recent");
+            refreshList(MyStrings.recID);
+            ab.setTitle(CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, MyStrings.recID));
+
         } else if (id == R.id.nav_rate) {
             toast("Rate");
             Intent rate = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.bhoiwala.grades.gradetracker"));
             startActivity(rate);
+
         } else if (id == R.id.nav_share) {
             toast("Sharing");
             Intent i = new Intent(Intent.ACTION_SEND);

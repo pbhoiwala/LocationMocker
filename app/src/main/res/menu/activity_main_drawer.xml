@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <group android:checkableBehavior="single">
+    <group android:checkableBehavior="none"
+        android:id="@+id/group1">
         <item
             android:id="@+id/nav_home"
             android:icon="@mipmap/ic_home_black_24dp"
             android:title="@string/nav_home" />
         <item
-            android:id="@+id/nav_howto"
-            android:icon="@mipmap/ic_info_black_24dp"
-            android:title="@string/nav_how_to" />
+            android:id="@+id/nav_enterCoordinates"
+            android:icon="@mipmap/ic_place_black_24dp"
+            android:title="@string/nav_enterCoordinates"/>
         <item
             android:id="@+id/nav_satellite"
             android:icon="@mipmap/ic_satellite_black_24dp"
             android:title="@string/nav_satellite" />
+    </group>
+
+    <group android:checkableBehavior="single"
+        android:id="@+id/group2">
         <item
             android:id="@+id/nav_favorites"
             android:icon="@mipmap/ic_favorite_black_24dp"
@@ -23,6 +28,15 @@
             android:icon="@mipmap/ic_history_black_24dp"
             android:title="@string/nav_recent" />
 
+
+    </group>
+
+    <group android:checkableBehavior="single"
+        android:id="@+id/group3">
+        <item
+            android:id="@+id/nav_howto"
+            android:icon="@mipmap/ic_info_black_24dp"
+            android:title="@string/nav_how_to" />
         <item
             android:id="@+id/nav_rate"
             android:icon="@mipmap/ic_star_rate_black_18dp"
@@ -32,4 +46,5 @@
             android:icon="@mipmap/ic_share_black_24dp"
             android:title="@string/nav_share" />
     </group>
+
 </menu>
