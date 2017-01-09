@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="1">
@@ -8,22 +9,153 @@
         android:text="About this app section"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/textView2"
-        android:layout_weight="0.16" />
+        android:id="@+id/tvAbout"
+        android:layout_weight="0.09"
+        android:textSize="20sp"
+        android:fontFamily="sans-serif"
+        android:layout_marginEnd="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp" />
 
     <TextView
-        android:text="How to use it"
+        android:text="How to use"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/textView"
-        android:textSize="18sp"
+        android:textSize="20sp"
+        android:textAlignment="textStart"
+        android:layout_gravity="start"
+        android:textColor="@color/colorPrimaryDark"
         android:textStyle="normal|bold"
-        android:textAlignment="textStart" />
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:weightSum="1">
+        <TextView
+            android:text="Enable Mock Settings"
+            android:layout_width="wrap_content"
+            android:layout_weight="0.96"
+            android:layout_height="36dp"
+            android:layout_gravity="fill_vertical"
+            android:id="@+id/textView2"
+            android:textSize="18sp"
+            android:theme="@style/AlertDialog.AppCompat.Light"
+            android:allowUndo="false"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingLeft="10dp"
+            android:textStyle="normal|bold" />
+
+        <Button
+            android:text="SETTINGS"
+            android:id="@+id/mockSettingBtn"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:background="@color/colorPrimary"
+            android:layout_height="36dp"
+            android:layout_gravity="end"
+            android:layout_width="100dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginRight="10dp" />
+
+    </LinearLayout>
+    <TextView
+        android:text="Drop a marker"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_gravity="fill_vertical"
+        android:id="@+id/textView3"
+        android:textStyle="normal|bold"
+        android:textSize="18sp"
+        android:theme="@style/AlertDialog.AppCompat.Light"
+        android:allowUndo="false"
+        android:gravity="center_vertical"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp" />
 
     <TextView
         android:text="Instructions section"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/textView3"
-        android:layout_weight="0.16" />
+        android:id="@+id/tvDropMarker"
+        android:paddingStart="10dp"
+        android:textSize="16sp"
+        android:layout_marginEnd="10dp" />
+
+    <TextView
+        android:text="Start Mocking"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_gravity="fill_vertical"
+        android:id="@+id/textView4"
+        android:textStyle="normal|bold"
+        android:textSize="18sp"
+        android:theme="@style/AlertDialog.AppCompat.Light"
+        android:allowUndo="false"
+        android:gravity="center_vertical"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp" />
+
+    <TextView
+        android:text="Instructions section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvAboutStart"
+        android:paddingStart="10dp"
+        android:textSize="16sp"
+        android:layout_marginEnd="10dp" />
+
+    <TextView
+        android:text="Add places to Favorites"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_gravity="fill_vertical"
+        android:id="@+id/textView5"
+        android:textStyle="normal|bold"
+        android:textSize="18sp"
+        android:theme="@style/AlertDialog.AppCompat.Light"
+        android:allowUndo="false"
+        android:gravity="center_vertical"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp" />
+
+    <TextView
+        android:text="Instructions section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvAboutFav"
+        android:paddingStart="10dp"
+        android:textSize="16sp"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp" />
+    <TextView
+        android:id="@+id/line"
+        style="?android:attr/listSeparatorTextViewStyle"
+
+        android:gravity="center_horizontal"
+        android:layout_below="@+id/connect_help"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/cardview_dark_background"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp" />
+    <TextView
+        android:text="Instructions section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvOther"
+        android:paddingStart="10dp"
+        android:textSize="16sp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp" />
 </LinearLayout>

@@ -40,16 +40,22 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
-
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
         <activity
-            android:name=".MapsActivityOld"
+            android:name=".MapsActivity"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MyListViewActivity"></activity>
-        <activity android:name=".HowToActivity"></activity>
+        <activity
+            android:name=".MyListViewActivity"
+            android:noHistory="true" />
+        <activity
+            android:name=".HowToActivity"
+            android:noHistory="true" />
     </application>
 </manifest>

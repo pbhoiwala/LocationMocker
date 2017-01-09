@@ -25,5 +25,5 @@
         android:id="@+id/layout_stub2"
         android:inflatedId="@+id/main_layout2"/>
 
-
 </LinearLayout>
+

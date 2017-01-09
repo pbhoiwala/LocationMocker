@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="408dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvEmpty"
+        android:textSize="18sp"
+        android:textColor="@color/cardview_dark_background"
+        android:textStyle="normal|bold"
+        android:layout_marginTop="4dp"
+        android:textAlignment="center" />
+</LinearLayout>

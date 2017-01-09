@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
-import android.support.annotation.StringRes;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -16,23 +15,18 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewStub;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bhoiwala.locationmocker.adapters.EmptyListAdapter;
 import com.bhoiwala.locationmocker.adapters.MyLocationAdapter;
 import com.bhoiwala.locationmocker.realm.MyLocation;
 import com.google.common.base.CaseFormat;
-import com.bhoiwala.locationmocker.MyStrings;
 
 import java.util.ArrayList;
 
@@ -67,11 +61,8 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
         NavigationView navigationView = (NavigationView)findViewById(R.id.nav_view2);
         navigationView.setNavigationItemSelectedListener(this);
 
-
         Intent intent = this.getIntent();
         String from_id = intent.getStringExtra("from_id");
-
-
 
         realm = Realm.getDefaultInstance();
         ab = getSupportActionBar();
@@ -90,45 +81,51 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
             listOfLocations.add(myLocation);
         }
         if(listOfLocations.size() == 0){
-            toast("No items to display");
+            ArrayList<String> emptyList = new ArrayList<>();
+            emptyList.add("No data to display");
+            EmptyListAdapter emptyAdapter = new EmptyListAdapter(this, emptyList);
+            listView.setAdapter(emptyAdapter);
+            listView.setDivider(null);
+            listView.setDividerHeight(0);
+        }else {
+            MyLocationAdapter listAdapter = new MyLocationAdapter(this, listOfLocations);
+            listView.setAdapter(listAdapter);
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                    MyLocation listItem = (MyLocation) listView.getItemAtPosition(i);
+                    Intent intent = new Intent(MyListViewActivity.this, MapsActivity.class);
+                    intent.putExtra("from_id", "ListViewActivity");
+                    intent.putExtra("place_name", listItem.placeName);
+                    intent.putExtra("place_lati", listItem.latitude);
+                    intent.putExtra("place_long", listItem.longitude);
+                    startActivity(intent);
+                }
+            });
+            listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                String from = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, from_id);
+
+                @Override
+                public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int i, long l) {
+                    new AlertDialog.Builder(context)
+                            .setTitle("Remove place")
+                            .setMessage("Are you sure you want to remove this place from " + from + "?")
+                            .setPositiveButton("REMOVE", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    MyLocation placeToRemove = (MyLocation) listView.getItemAtPosition(i);
+                                    deleteItemFromDB(from_id, placeToRemove);
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // do nothing
+                                }
+                            })
+                            .show();
+                    return true;
+                }
+            });
         }
-        MyLocationAdapter listAdapter = new MyLocationAdapter(this, listOfLocations);
-        listView.setAdapter(listAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                MyLocation listItem = (MyLocation) listView.getItemAtPosition(i);
-                toast(listItem.placeName);
-                Intent intent = new Intent(MyListViewActivity.this, MapsActivityOld.class);
-                intent.putExtra("from_id", "ListViewActivity");
-                intent.putExtra("place_name", listItem.placeName);
-                intent.putExtra("place_lati", listItem.latitude);
-                intent.putExtra("place_long", listItem.longitude);
-                startActivity(intent);
-            }
-        });
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            String from = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, from_id);
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int i, long l) {
-                new AlertDialog.Builder(context)
-                        .setTitle("Remove place")
-                        .setMessage("Are you sure you want to remove this place from " + from + "?")
-                        .setPositiveButton("REMOVE", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                MyLocation placeToRemove = (MyLocation)listView.getItemAtPosition(i);
-                                deleteItemFromDB(from_id, placeToRemove);
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                // do nothing
-                            }
-                        })
-                        .show();
-                return true;
-            }
-        });
     }
 
     private void deleteItemFromDB(String from_id, MyLocation placeToRemove) {
@@ -181,16 +178,17 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
     public boolean onNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.nav_home){
-            toast("Home");
-            Intent intent = new Intent (MyListViewActivity.this, MapsActivityOld.class);
+            Intent intent = new Intent (MyListViewActivity.this, MapsActivity.class);
             startActivity(intent);
 
         } else if (id == R.id.nav_howto){
-            toast("How To");
             Intent intent = new Intent(MyListViewActivity.this, HowToActivity.class);
             intent.putExtra("from_id", MyStrings.howID);
             startActivity(intent);
 
+
+        } else if (id == R.id.nav_enterCoordinates){
+            toast("Go to main page and try again");
         } else if(id == R.id.nav_satellite){
             toast("Unable to change the view from this page");
 
@@ -203,19 +201,15 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
             ab.setTitle(CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, MyStrings.recID));
 
         } else if (id == R.id.nav_rate) {
-            toast("Rate");
-            Intent rate = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.bhoiwala.grades.gradetracker"));
+//            toast("Rate");
+            Intent rate = new Intent(Intent.ACTION_VIEW, Uri.parse(MyStrings.RATE_URL));
             startActivity(rate);
-
         } else if (id == R.id.nav_share) {
-            toast("Sharing");
+//            toast("Sharing");
             Intent i = new Intent(Intent.ACTION_SEND);
             i.setType("text/plain");
             i.putExtra(Intent.EXTRA_SUBJECT, "Location Mocker");
-            String sAux = "\nHey, check out Location Mocker. This android app can mock you current location " +
-                    "in real time.\n\n";
-            sAux = sAux + "https://play.google.com/store/apps/details?id=com.bhoiwala.grades.gradetracker \n\n";
-            i.putExtra(Intent.EXTRA_TEXT, sAux);
+            i.putExtra(Intent.EXTRA_TEXT, MyStrings.SHARE_MSG);
             startActivity(Intent.createChooser(i, "Share via"));
         }
 

@@ -22,8 +22,6 @@
     <string name="idRec">RECENT</string>
     <string name="idHow">HOW_TO</string>
 
-
-
     <!-- Toolbar titles when navigation menu item is selected -->
     <string-array name="nav_item_activity_titles">
         <item>Home</item>
