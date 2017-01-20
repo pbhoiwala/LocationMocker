@@ -4,6 +4,7 @@ import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -44,7 +45,6 @@ import android.widget.Toast;
 //import com.bhoiwala.locationmocker.realm.Favorites;
 import com.bhoiwala.locationmocker.realm.MyLocation;
 //import com.bhoiwala.locationmocker.realm.Recent;
-import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import android.location.LocationListener;
@@ -66,9 +66,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -104,6 +101,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
 
     // A default location (New York City) and default zoom to use when location permission is
     // not granted.
+    private CameraPosition oldCameraPosition;
     private final LatLng mDefaultLocation = new LatLng(40.730610, -73.935242);
     private static final int DEFAULT_ZOOM = 18;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
@@ -117,7 +115,8 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
     private static final String KEY_LOCATION = "location";
     private static final String KEY_SEARCH_BAR = "search";
     private static final String KEY_DROPPED_PIN = "dropped";
-
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
     // Tools for navigation drawer
     protected DrawerLayout drawer;
     protected Toolbar toolbar;
@@ -148,6 +147,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
         super.onCreate(savedInstanceState);
 
        // Retrieve location and camera position from saved instance state.
+
         if (savedInstanceState != null) {
             mCurrentLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
@@ -192,7 +192,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
         autocompleteFragment.setText(searchBarText);
         LatLng latLng = new LatLng(goToLocation.latitude, goToLocation.longitude);
         mMap.addMarker(new MarkerOptions().position(latLng));
-        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM));
         prepareFakeLocation(latLng);
         refreshFavoriteButton();
     }
@@ -251,20 +251,13 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
      */
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
         if (mMap != null) {
-            outState.putParcelable(KEY_CAMERA_POSITION, mMap.getCameraPosition());
+            outState.putParcelable(KEY_CAMERA_POSITION, mCameraPosition);
             outState.putParcelable(KEY_LOCATION, mCurrentLocation);
             outState.putString(KEY_SEARCH_BAR, searchBarText);
             outState.putParcelable(KEY_DROPPED_PIN, droppedMarker);
-            try {
-                FileOutputStream fOut = openFileOutput("cameraFile", Context.MODE_PRIVATE);
-                String cameraPos = mMap.getCameraPosition().toString();
-                fOut.write(cameraPos.getBytes());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            super.onSaveInstanceState(outState);
+            setCameraPosition();
         }
     }
 
@@ -400,12 +393,15 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
          * If the previous state was saved, set the position to the saved state.
          * If the current location is unknown, use a default position and zoom value.
          */
+        getOldCameraPosition();
         if (mCameraPosition != null) {
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(mCameraPosition));
         } else if (mCurrentLocation != null) {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                     new LatLng(mCurrentLocation.getLatitude(),
                             mCurrentLocation.getLongitude()), DEFAULT_ZOOM));
+        } else if (oldCameraPosition != null){
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(oldCameraPosition));
         } else {
             Log.d(TAG, "Current location is null. Using defaults.");
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, 10));
@@ -474,10 +470,14 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
                 mMap.clear();
                 myLocationButton.setImageResource(R.mipmap.ic_crosshairs_gps_grey600_24dp);
                 searchBarText = place.getName().toString();
-                LatLng latLng = place.getLatLng();
-                mMap.addMarker(new MarkerOptions().position(latLng).title(searchBarText));
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-                prepareFakeLocation(latLng);
+                LatLng point = place.getLatLng();
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(point);
+                markerOptions.title(searchBarText);
+                mMap.addMarker(markerOptions);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, DEFAULT_ZOOM));
+                toast("Going to location");
+                prepareFakeLocation(point);
                 refreshFavoriteButton();
             }
             @Override
@@ -490,7 +490,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
             @Override
             public boolean onMarkerClick(Marker marker) {
                 marker.showInfoWindow();
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), DEFAULT_ZOOM));
                 toast("Press Green button to start faking location");
                 return true;
             }
@@ -513,6 +513,36 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
         });
         snackBarForMockSetting();
         isCallFromDifferentActivity();
+    }
+
+    private void setCameraPosition(){
+        mCameraPosition = mMap.getCameraPosition();
+        SharedPreferences.Editor editor = getSharedPreferences("CameraPositionFile", MODE_PRIVATE).edit();
+//        editor.putString(KEY_CAMERA_POSITION, mCameraPosition.toString());
+        editor.putFloat("cp_latitude", (float) mCameraPosition.target.latitude);
+        editor.putFloat("cp_longitude", (float) mCameraPosition.target.longitude);
+        editor.putFloat("cp_zoom", mCameraPosition.zoom);
+        editor.putFloat("cp_tilt", mCameraPosition.tilt);
+        editor.putFloat("cp_bearing", mCameraPosition.bearing);
+        editor.commit();
+    }
+    private void getOldCameraPosition(){
+        SharedPreferences prefs = getSharedPreferences("CameraPositionFile", MODE_PRIVATE);
+        String restoredText = prefs.getString("text", null);
+        if(restoredText != null){
+            float lati = prefs.getFloat("cp_latitude", Float.parseFloat(null));
+            float longi = prefs.getFloat("cp_longitude", Float.parseFloat(null));
+            LatLng target = new LatLng(lati, longi);
+            float zoom = prefs.getFloat("cp_zoom", Float.parseFloat(null));
+            float tilt = prefs.getFloat("cp_tilt", Float.parseFloat(null));
+            float bearing = prefs.getFloat("cp_bearing", Float.parseFloat(null));
+            oldCameraPosition = new CameraPosition.Builder()
+                    .target(target)
+                    .zoom(zoom)
+                    .tilt(tilt)
+                    .bearing(bearing)
+                    .build();
+        }
     }
 
     private void snackBarForGPS() {
@@ -542,16 +572,20 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
                 goToPlace.latitude = intent.getDoubleExtra("place_lati", 0.0);
                 goToPlace.longitude = intent.getDoubleExtra("place_long", 0.0);
                 goToLocation(goToPlace);
+                intent.removeExtra("from_id");
             }
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void clearMap() {
-        mMap.clear();
+        mCameraPosition = mMap.getCameraPosition();
+//        mMap.clear();
         droppedMarker = null;
+        searchBarText = "";
         refreshFavoriteButton();
-        autocompleteFragment.setText("");
+        autocompleteFragment.setText(searchBarText);
+        mMap.clear();
     }
 
     /**
@@ -867,7 +901,6 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
         if (mMap == null) {
             return;
         }
-
         if (mLocationPermissionGranted) {
             //set this to 'false' to get rid of "blue dot"
             mMap.setMyLocationEnabled(true);

@@ -117,6 +117,8 @@ public class HowToActivity extends AppCompatActivity implements NavigationView.O
 //            toast("Home");
             Intent intent = new Intent (HowToActivity.this, MapsActivity.class);
             startActivity(intent);
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+//            super.onBackPressed();
         } else if (id == R.id.nav_howto){
 //            toast("How To");
             drawer.closeDrawer(GravityCompat.START);

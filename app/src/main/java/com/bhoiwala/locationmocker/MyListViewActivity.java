@@ -42,7 +42,6 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
     private Toolbar toolbar;
     DrawerLayout drawer;
     ActionBarDrawerToggle toggle;
-    MyStrings s = new MyStrings();
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -74,7 +73,7 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
     }
 
     public void refreshList(final String from_id){
-        final ListView listView = (ListView) findViewById(R.id.myList);
+
         RealmResults<MyLocation> myLocations = realm.where(MyLocation.class).equalTo("id", from_id).findAll();
         listOfLocations = new ArrayList<>();
         for(MyLocation myLocation: myLocations){
@@ -84,12 +83,15 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
             ArrayList<String> emptyList = new ArrayList<>();
             emptyList.add("No data to display");
             EmptyListAdapter emptyAdapter = new EmptyListAdapter(this, emptyList);
+            final ListView listView = (ListView) findViewById(R.id.myList);
             listView.setAdapter(emptyAdapter);
             listView.setDivider(null);
             listView.setDividerHeight(0);
         }else {
             MyLocationAdapter listAdapter = new MyLocationAdapter(this, listOfLocations);
+            final ListView listView = (ListView) findViewById(R.id.myList);
             listView.setAdapter(listAdapter);
+            listView.setDividerHeight(1);
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -170,6 +172,7 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
         if(drawer.isDrawerOpen(Gravity.LEFT)){
             drawer.closeDrawer(Gravity.LEFT);
         }else {
+            getIntent().removeExtra("from_id");
             super.onBackPressed();
         }
     }
@@ -179,8 +182,9 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
         int id = item.getItemId();
         if(id == R.id.nav_home){
             Intent intent = new Intent (MyListViewActivity.this, MapsActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
-
+//            super.onBackPressed();
         } else if (id == R.id.nav_howto){
             Intent intent = new Intent(MyListViewActivity.this, HowToActivity.class);
             intent.putExtra("from_id", MyStrings.howID);
