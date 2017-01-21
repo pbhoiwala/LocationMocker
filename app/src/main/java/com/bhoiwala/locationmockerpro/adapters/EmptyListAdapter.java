@@ -1,4 +1,4 @@
-package com.bhoiwala.locationmocker.adapters;
+package com.bhoiwala.locationmockerpro.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -7,8 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.bhoiwala.locationmocker.R;
-import com.bhoiwala.locationmocker.realm.MyLocation;
+import com.bhoiwala.locationmockerpro.R;
 
 import java.util.ArrayList;
 

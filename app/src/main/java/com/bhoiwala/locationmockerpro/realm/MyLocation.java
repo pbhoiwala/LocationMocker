@@ -1,4 +1,4 @@
-package com.bhoiwala.locationmocker.realm;
+package com.bhoiwala.locationmockerpro.realm;
 
 import io.realm.RealmObject;
 

@@ -1,4 +1,4 @@
-package com.bhoiwala.locationmocker;
+package com.bhoiwala.locationmockerpro;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

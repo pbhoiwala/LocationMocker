@@ -1,4 +1,4 @@
-package com.bhoiwala.locationmocker;
+package com.bhoiwala.locationmockerpro;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,9 +23,9 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.bhoiwala.locationmocker.adapters.EmptyListAdapter;
-import com.bhoiwala.locationmocker.adapters.MyLocationAdapter;
-import com.bhoiwala.locationmocker.realm.MyLocation;
+import com.bhoiwala.locationmockerpro.adapters.EmptyListAdapter;
+import com.bhoiwala.locationmockerpro.adapters.MyLocationAdapter;
+import com.bhoiwala.locationmockerpro.realm.MyLocation;
 import com.google.common.base.CaseFormat;
 
 import java.util.ArrayList;

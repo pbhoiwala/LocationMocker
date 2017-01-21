@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.bhoiwala.locationmocker">
+    package="com.bhoiwala.locationmockerpro">
 
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
@@ -44,7 +44,7 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
         <activity
-            android:name=".MapsActivity"
+            android:name="com.bhoiwala.locationmockerpro.MapsActivity"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -52,10 +52,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MyListViewActivity"
+            android:name="com.bhoiwala.locationmockerpro.MyListViewActivity"
             android:noHistory="true" />
         <activity
-            android:name=".HowToActivity"
+            android:name="com.bhoiwala.locationmockerpro.HowToActivity"
             android:noHistory="true" />
     </application>
 </manifest>

@@ -1,4 +1,4 @@
-package com.bhoiwala.locationmocker;
+package com.bhoiwala.locationmockerpro;
 
 import android.app.AppOpsManager;
 import android.content.Context;
@@ -43,7 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 //import com.bhoiwala.locationmocker.realm.Favorites;
-import com.bhoiwala.locationmocker.realm.MyLocation;
+import com.bhoiwala.locationmockerpro.realm.MyLocation;
 //import com.bhoiwala.locationmocker.realm.Recent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -74,7 +74,7 @@ import io.realm.Realm;
 import io.realm.RealmQuery;
 import io.realm.RealmResults;
 
-import static com.bhoiwala.locationmocker.R.id.placeName;
+import static com.bhoiwala.locationmockerpro.R.id.placeName;
 
 public class MapsActivity extends FragmentActivity implements /*LocationListener,*/ OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, NavigationView.OnNavigationItemSelectedListener {
@@ -519,38 +519,32 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
 
     private void setCameraPosition(){
         CameraPosition cameraPosition = mMap.getCameraPosition();
-        SharedPreferences.Editor editor = getSharedPreferences("CameraPositionFile", MODE_PRIVATE).edit();
+        SharedPreferences.Editor editor = getSharedPreferences(MyStrings.cpFile, MODE_PRIVATE).edit();
         editor.putString(KEY_CAMERA_POSITION, cameraPosition.toString());
-        editor.putFloat("cp_latitude", (float) cameraPosition.target.latitude);
-        editor.putFloat("cp_longitude", (float) cameraPosition.target.longitude);
-        editor.putFloat("cp_zoom", cameraPosition.zoom);
-        editor.putFloat("cp_tilt", cameraPosition.tilt);
-        editor.putFloat("cp_bearing", cameraPosition.bearing);
+        editor.putFloat(MyStrings.cpLATI, (float) cameraPosition.target.latitude);
+        editor.putFloat(MyStrings.cpLONG, (float) cameraPosition.target.longitude);
+        editor.putFloat(MyStrings.cpZOOM, cameraPosition.zoom);
+        editor.putFloat(MyStrings.cpTILT, cameraPosition.tilt);
+        editor.putFloat(MyStrings.cpBEAR, cameraPosition.bearing);
         editor.apply();
 
     }
 
     private void getOldCameraPosition(){
-        SharedPreferences prefs = getSharedPreferences("CameraPositionFile", MODE_PRIVATE);
-//        String restoredText = prefs.getString("text", null);
-//        if(prefs != null) {
-//            try {
-                float lati = prefs.getFloat("cp_latitude", 0);
-                float longi = prefs.getFloat("cp_longitude", 0);
-                LatLng target = new LatLng(lati, longi);
-                float zoom = prefs.getFloat("cp_zoom", 0);
-                float tilt = prefs.getFloat("cp_tilt", 0);
-                float bearing = prefs.getFloat("cp_bearing", 0);
-                oldCameraPosition = new CameraPosition.Builder()
-                        .target(target)
-                        .zoom(zoom)
-                        .tilt(tilt)
-                        .bearing(bearing)
-                        .build();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
+        SharedPreferences prefs = getSharedPreferences(MyStrings.cpFile, MODE_PRIVATE);
+            float lati = prefs.getFloat(MyStrings.cpLATI, 0);
+            float longi = prefs.getFloat(MyStrings.cpLONG, 0);
+            LatLng target = new LatLng(lati, longi);
+            float zoom = prefs.getFloat(MyStrings.cpZOOM, 0);
+            float tilt = prefs.getFloat(MyStrings.cpTILT, 0);
+            float bearing = prefs.getFloat(MyStrings.cpBEAR, 0);
+            oldCameraPosition = new CameraPosition.Builder()
+                    .target(target)
+                    .zoom(zoom)
+                    .tilt(tilt)
+                    .bearing(bearing)
+                    .build();
+
     }
 
     private void snackBarForGPS() {

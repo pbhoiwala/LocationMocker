@@ -6,7 +6,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "23.0.3"
     defaultConfig {
-        applicationId "com.bhoiwala.locationmocker"
+        applicationId "com.bhoiwala.locationmockerpro"
         minSdkVersion 15
         targetSdkVersion 25
         versionCode 2
