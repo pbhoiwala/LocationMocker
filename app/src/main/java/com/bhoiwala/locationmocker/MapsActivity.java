@@ -74,6 +74,8 @@ import io.realm.Realm;
 import io.realm.RealmQuery;
 import io.realm.RealmResults;
 
+import static com.bhoiwala.locationmocker.R.id.placeName;
+
 public class MapsActivity extends FragmentActivity implements /*LocationListener,*/ OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -406,6 +408,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
             Log.d(TAG, "Current location is null. Using defaults.");
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, 10));
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            toast("Using Default");
         }
 
         /*
@@ -516,33 +519,39 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
     }
 
     private void setCameraPosition(){
-        mCameraPosition = mMap.getCameraPosition();
+        CameraPosition cameraPosition = mMap.getCameraPosition();
         SharedPreferences.Editor editor = getSharedPreferences("CameraPositionFile", MODE_PRIVATE).edit();
-//        editor.putString(KEY_CAMERA_POSITION, mCameraPosition.toString());
-        editor.putFloat("cp_latitude", (float) mCameraPosition.target.latitude);
-        editor.putFloat("cp_longitude", (float) mCameraPosition.target.longitude);
-        editor.putFloat("cp_zoom", mCameraPosition.zoom);
-        editor.putFloat("cp_tilt", mCameraPosition.tilt);
-        editor.putFloat("cp_bearing", mCameraPosition.bearing);
-        editor.commit();
+        editor.putString(KEY_CAMERA_POSITION, cameraPosition.toString());
+        editor.putFloat("cp_latitude", (float) cameraPosition.target.latitude);
+        editor.putFloat("cp_longitude", (float) cameraPosition.target.longitude);
+        editor.putFloat("cp_zoom", cameraPosition.zoom);
+        editor.putFloat("cp_tilt", cameraPosition.tilt);
+        editor.putFloat("cp_bearing", cameraPosition.bearing);
+        editor.apply();
+
     }
+
     private void getOldCameraPosition(){
         SharedPreferences prefs = getSharedPreferences("CameraPositionFile", MODE_PRIVATE);
-        String restoredText = prefs.getString("text", null);
-        if(restoredText != null){
-            float lati = prefs.getFloat("cp_latitude", Float.parseFloat(null));
-            float longi = prefs.getFloat("cp_longitude", Float.parseFloat(null));
-            LatLng target = new LatLng(lati, longi);
-            float zoom = prefs.getFloat("cp_zoom", Float.parseFloat(null));
-            float tilt = prefs.getFloat("cp_tilt", Float.parseFloat(null));
-            float bearing = prefs.getFloat("cp_bearing", Float.parseFloat(null));
-            oldCameraPosition = new CameraPosition.Builder()
-                    .target(target)
-                    .zoom(zoom)
-                    .tilt(tilt)
-                    .bearing(bearing)
-                    .build();
-        }
+//        String restoredText = prefs.getString("text", null);
+//        if(prefs != null) {
+//            try {
+                float lati = prefs.getFloat("cp_latitude", 0);
+                float longi = prefs.getFloat("cp_longitude", 0);
+                LatLng target = new LatLng(lati, longi);
+                float zoom = prefs.getFloat("cp_zoom", 0);
+                float tilt = prefs.getFloat("cp_tilt", 0);
+                float bearing = prefs.getFloat("cp_bearing", 0);
+                oldCameraPosition = new CameraPosition.Builder()
+                        .target(target)
+                        .zoom(zoom)
+                        .tilt(tilt)
+                        .bearing(bearing)
+                        .build();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     private void snackBarForGPS() {
@@ -579,13 +588,11 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void clearMap() {
-        mCameraPosition = mMap.getCameraPosition();
-//        mMap.clear();
+        mMap.clear();
         droppedMarker = null;
         searchBarText = "";
         refreshFavoriteButton();
         autocompleteFragment.setText(searchBarText);
-        mMap.clear();
     }
 
     /**
@@ -624,7 +631,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
     public void askForName(){
         LayoutInflater li = LayoutInflater.from(this);
         View promptsView = li.inflate(R.layout.dialog_favorite_name, null);
-        final EditText favPlaceName = (EditText) promptsView.findViewById(R.id.placeName);
+        final EditText favPlaceName = (EditText) promptsView.findViewById(placeName);
         favPlaceName.setText(searchBarText);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setView(promptsView);
