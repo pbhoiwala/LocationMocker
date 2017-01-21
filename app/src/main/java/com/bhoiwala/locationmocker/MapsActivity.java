@@ -479,7 +479,6 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
                 markerOptions.title(searchBarText);
                 mMap.addMarker(markerOptions);
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, DEFAULT_ZOOM));
-                toast("Going to location");
                 prepareFakeLocation(point);
                 refreshFavoriteButton();
             }
