@@ -42,6 +42,7 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
     private Toolbar toolbar;
     DrawerLayout drawer;
     ActionBarDrawerToggle toggle;
+    private Boolean isMocking;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -62,7 +63,7 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
 
         Intent intent = this.getIntent();
         String from_id = intent.getStringExtra("from_id");
-
+        isMocking = intent.getBooleanExtra("mock_status", false);
         realm = Realm.getDefaultInstance();
         ab = getSupportActionBar();
         ab.setTitle(CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, from_id));
@@ -188,6 +189,7 @@ public class MyListViewActivity extends AppCompatActivity implements NavigationV
         } else if (id == R.id.nav_howto){
             Intent intent = new Intent(MyListViewActivity.this, HowToActivity.class);
             intent.putExtra("from_id", MyStrings.howID);
+            intent.putExtra("mock_status", isMocking);
             startActivity(intent);
 
 

@@ -327,7 +327,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onMapReady(GoogleMap map) {
-
+        // Checks to see if Call is made from a different activity
         // Initialize location manager and location provider
         final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         final String provider = LocationManager.GPS_PROVIDER;
@@ -336,6 +336,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
         mMap = map;
         myLocationButton = (FloatingActionButton) findViewById(R.id.find_my_location);
         startFakingButton = (FloatingActionButton) findViewById(R.id.start_faking);
+
         addFav = (ImageView) findViewById(R.id.addToFavorite);
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
@@ -515,6 +516,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
         });
         snackBarForMockSetting();
         isCallFromDifferentActivity();
+
     }
 
     private void setCameraPosition(){
@@ -567,7 +569,12 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void isCallFromDifferentActivity(){
         Intent intent = this.getIntent();
-        if(intent.hasExtra("from_id")){
+        if(intent.hasExtra("mock_status")){
+            if(intent.getBooleanExtra("mock_status", false)){
+                isMocking = true;
+                setupStartStopButton();
+            }
+        }else if(intent.hasExtra("from_id")){
             if (intent.getStringExtra("from_id").equals("ListViewActivity")) {
                 MyLocation goToPlace = new MyLocation();
                 goToPlace.placeName = intent.getStringExtra("place_name");
@@ -937,6 +944,7 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
 //            toast("How To");
             Intent intent = new Intent(MapsActivity.this, HowToActivity.class);
             intent.putExtra("from_id", MyStrings.howID);
+            intent.putExtra("mock_status", isMocking);
             startActivity(intent);
         } else if (id == R.id.nav_satellite) {
 //            toast("Satellite");
@@ -945,11 +953,13 @@ public class MapsActivity extends FragmentActivity implements /*LocationListener
 //            toast("Favorites");
             Intent intent = new Intent(MapsActivity.this, MyListViewActivity.class);
             intent.putExtra("from_id", MyStrings.favID);
+            intent.putExtra("mock_status", isMocking);
             startActivity(intent);
         } else if (id == R.id.nav_recent) {
 //            toast("Recent");
             Intent intent = new Intent(MapsActivity.this, MyListViewActivity.class);
             intent.putExtra("from_id", MyStrings.recID);
+            intent.putExtra("mock_status", isMocking);
             startActivity(intent);
         } else if (id == R.id.nav_rate) {
 //            toast("Rate");
